@@ -32,7 +32,7 @@ Thumbs.db
 *.swp
 
 # ML model (large binary — use Git LFS or external storage)
-ml-service/models/best_model.pkl
+
 
 # Python eggs
 *.egg-info/
