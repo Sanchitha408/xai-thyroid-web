@@ -1,0 +1,213 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MessageCircle, X, Send, Bot, User as UserIcon } from 'lucide-react';
+import useGroqChat from '../hooks/useGroqChat';
+import useAuth from '../hooks/useAuth';
+import i18n from '../i18n/i18n';
+import { animateChatOpen } from '../animations/gsapAnimations';
+
+export default function ChatBot() {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const currentLang = i18n.language || 'en';
+  const { messages, loading, sendMessage, clearSession } = useGroqChat(currentLang);
+  const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState('');
+  const chatPanelRef = useRef(null);
+  const messagesEndRef = useRef(null);
+
+  // Trigger GSAP open animation when isOpen becomes true
+  useEffect(() => {
+    if (isOpen) {
+      animateChatOpen(chatPanelRef);
+      scrollToBottom();
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, loading]);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleSend = async (e) => {
+    e.preventDefault();
+    if (!input.trim() || loading) return;
+    const currentInput = input;
+    setInput('');
+    await sendMessage(currentInput);
+  };
+
+  return (
+    <div className="fixed bottom-6 right-6 z-50 font-poppins">
+      {/* Floating Chat Bubble */}
+      {!isOpen && (
+        <div className="relative group">
+          <button
+            onClick={() => setIsOpen(true)}
+            aria-label="Open chat assistant"
+            style={{
+              position: 'fixed',
+              bottom: '1.5rem',
+              right: '1.5rem',
+              zIndex: 50,
+              width: '3.5rem',
+              height: '3.5rem',
+              borderRadius: '9999px',
+              background: '#3B82F6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 10px 25px rgba(59,130,246,0.4)',
+              border: 'none',
+              outline: 'none',
+              cursor: 'pointer',
+              transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+              e.currentTarget.style.boxShadow = '0 14px 35px rgba(59,130,246,0.65)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = '0 10px 25px rgba(59,130,246,0.4)';
+            }}
+          >
+            <MessageCircle size={24} color="white" />
+          </button>
+          {/* Tooltip */}
+          <span
+            style={{
+              position: 'fixed',
+              bottom: '5.5rem',
+              right: '1.5rem',
+              zIndex: 50,
+              background: '#111827',
+              border: '1px solid rgba(255,255,255,0.08)',
+              color: '#94A3B8',
+              fontSize: '0.7rem',
+              padding: '0.3rem 0.65rem',
+              borderRadius: '6px',
+              whiteSpace: 'nowrap',
+              pointerEvents: 'none',
+              opacity: 0,
+              transition: 'opacity 0.2s ease',
+            }}
+            className="group-hover:!opacity-100"
+          >
+            Ask Thyroid Assistant
+          </span>
+        </div>
+      )}
+
+      {/* Expanded Chat Panel */}
+      {isOpen && (
+        <div
+          ref={chatPanelRef}
+          className="w-[380px] h-[520px] max-w-[calc(100vw-2rem)] bg-bg-card/95 border border-border rounded-2xl shadow-card backdrop-blur-glass flex flex-col overflow-hidden"
+        >
+          {/* Header */}
+          <div className="bg-bg-card border-b border-border p-4 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bot className="text-primary" size={22} />
+              <span className="font-orbitron font-semibold text-sm tracking-wider text-secondary">
+                {t('chatbot.title')}
+              </span>
+            </div>
+            <button
+              onClick={() => setIsOpen(false)}
+              className="text-muted hover:text-secondary transition-colors duration-200"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Messages area */}
+          <div className="flex-1 p-4 overflow-y-auto chat-messages flex flex-col gap-4">
+            {/* Welcome message */}
+            <div className="flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                <Bot size={16} className="text-primary" />
+              </div>
+              <div className="bg-bg-glass border border-border py-2 px-3.5 rounded-2xl rounded-tl-none max-w-[80%] text-sm text-secondary">
+                {t('chatbot.welcome')}
+              </div>
+            </div>
+
+            {/* Render conversation */}
+            {messages.map((msg, index) => {
+              const isUser = msg.role === 'user';
+              return (
+                <div
+                  key={index}
+                  className={`flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
+                >
+                  {!isUser && (
+                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                      <Bot size={16} className="text-primary" />
+                    </div>
+                  )}
+                  <div
+                    className={`py-2 px-3.5 rounded-2xl text-sm ${
+                      isUser
+                        ? 'bg-primary text-white rounded-tr-none max-w-[80%] shadow-glow-sm'
+                        : 'bg-bg-glass border border-border rounded-tl-none max-w-[80%] text-secondary'
+                    }`}
+                  >
+                    {msg.content}
+                  </div>
+                  {isUser && (
+                    <div className="w-8 h-8 rounded-full bg-bg-glass border border-border flex items-center justify-center shrink-0">
+                      <UserIcon size={16} className="text-muted" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+
+            {/* Typing Indicator */}
+            {loading && (
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                  <Bot size={16} className="text-primary" />
+                </div>
+                <div className="bg-bg-glass border border-border py-3.5 px-4 rounded-2xl rounded-tl-none flex items-center gap-1">
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                  <div className="typing-dot"></div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Footer & input */}
+          <div className="p-3 bg-bg-card border-t border-border flex flex-col gap-2">
+            <form onSubmit={handleSend} className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                placeholder={t('chatbot.placeholder')}
+                disabled={loading}
+                className="form-input flex-1 py-2 text-sm bg-bg-glass"
+              />
+              <button
+                type="submit"
+                disabled={loading || !input.trim()}
+                className="btn-primary py-2 px-3.5 shadow-none shrink-0"
+              >
+                <Send size={16} />
+              </button>
+            </form>
+            <div className="text-[10px] text-muted text-center flex items-center justify-center gap-1">
+              <span>{t('chatbot.powered_by')}</span>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

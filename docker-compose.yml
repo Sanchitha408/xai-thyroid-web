@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: xai_thyroid_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: xai_thyroid_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  ml-service:
+    build: ./ml-service
+    container_name: xai_ml_service
+    restart: unless-stopped
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./ml-service/models:/app/models
+    environment:
+      - PYTHONUNBUFFERED=1
+
+  backend:
+    build: ./server
+    container_name: xai_backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '5000:5000'
+    env_file:
+      - ./server/.env
+    environment:
+      - DB_HOST=postgres
+
+volumes:
+  pgdata:

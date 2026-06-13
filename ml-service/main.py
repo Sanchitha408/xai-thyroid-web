@@ -1,0 +1,148 @@
+"""
+main.py — FastAPI ML microservice for XAI Thyroid.
+Exposes POST /predict and GET /health endpoints.
+Runs on port 8000.
+"""
+
+from contextlib import asynccontextmanager
+from typing import Literal
+
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field, validator
+import logging
+
+from predict import load_model, run_prediction
+
+# ─── Logging ───────────────────────────────────────────────────────────────────
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("xai-thyroid-ml")
+
+# ─── Global model state ────────────────────────────────────────────────────────
+ml_state: dict = {}
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Load model once on startup, release on shutdown."""
+    logger.info("Loading ML model...")
+    try:
+        ml_state["model"] = load_model()
+        logger.info("Model loaded successfully.")
+    except FileNotFoundError as e:
+        logger.warning(str(e))
+        logger.warning(
+            "Starting without a model. /predict will return 503 until "
+            "best_model.pkl is placed in ml-service/models/ and service is restarted."
+        )
+        ml_state["model"] = None
+    yield
+    ml_state.clear()
+    logger.info("ML service shut down.")
+
+
+# ─── FastAPI app ───────────────────────────────────────────────────────────────
+app = FastAPI(
+    title="XAI Thyroid ML Service",
+    description="Thyroid disease prediction with SHAP explainability",
+    version="1.0.0",
+    lifespan=lifespan,
+)
+
+# CORS: only allow the Node.js backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5000",
+        "http://127.0.0.1:5000",
+        "http://backend:5000",  # Docker service name
+    ],
+    allow_methods=["POST", "GET"],
+    allow_headers=["Content-Type"],
+)
+
+
+# ─── Schemas ───────────────────────────────────────────────────────────────────
+class PredictRequest(BaseModel):
+    tsh: float = Field(..., ge=0.0, le=30.0,  description="TSH level (0–30 mIU/L)")
+    t3:  float = Field(..., ge=0.0, le=15.0,  description="T3 level (0–15 nmol/L)")
+    tt4: float = Field(..., ge=0.0, le=300.0, description="TT4 level (0–300 nmol/L)")
+    fti: float = Field(..., ge=0.0, le=400.0, description="Free Thyroxine Index (0–400)")
+    age: int   = Field(..., ge=1,   le=120,   description="Patient age (1–120)")
+    sex: str   = Field(...,                   description="'Male' or 'Female'")
+
+    @validator("sex")
+    def validate_sex(cls, v):
+        if v.strip().lower() not in ("male", "female", "m", "f", "0", "1"):
+            raise ValueError("sex must be 'Male' or 'Female'")
+        return v
+
+
+class ShapEntry(BaseModel):
+    feature:    str
+    value:      float
+    shap_value: float
+
+
+class PredictResponse(BaseModel):
+    prediction:    str
+    confidence:    float
+    probabilities: dict[str, float]
+    shap_values:   list[ShapEntry]
+
+
+# ─── Routes ────────────────────────────────────────────────────────────────────
+@app.get("/health", tags=["Health"])
+async def health():
+    """Health check endpoint."""
+    return {
+        "status": "ok",
+        "model_loaded": ml_state.get("model") is not None,
+    }
+
+
+@app.post("/predict", response_model=PredictResponse, tags=["Prediction"])
+async def predict(payload: PredictRequest):
+    """
+    Run thyroid prediction and compute SHAP explanations.
+    Accepts blood test values and returns:
+      - prediction (Normal | Hypothyroid | Hyperthyroid)
+      - confidence (%)
+      - class probabilities
+      - top 6 SHAP feature contributions
+    """
+    model = ml_state.get("model")
+    if model is None:
+        raise HTTPException(
+            status_code=503,
+            detail="ML model not loaded. Place best_model.pkl in ml-service/models/ and restart.",
+        )
+
+    try:
+        result = run_prediction(
+            model=model,
+            tsh=payload.tsh,
+            t3=payload.t3,
+            tt4=payload.tt4,
+            fti=payload.fti,
+            age=payload.age,
+            sex=payload.sex,
+        )
+        logger.info(
+            "Prediction: %s (confidence: %.1f%%)", result["prediction"], result["confidence"]
+        )
+        return result
+    except Exception as e:
+        logger.error("Prediction error: %s", str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail="Prediction failed. Check server logs.")
+
+
+# ─── Global exception handler ──────────────────────────────────────────────────
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    logger.error("Unhandled exception: %s", str(exc), exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Internal server error"},
+    )

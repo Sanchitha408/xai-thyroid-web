@@ -1,0 +1,157 @@
+{
+  "nav": {
+    "home": "Home",
+    "diagnose": "Diagnose",
+    "dashboard": "Dashboard",
+    "about": "About",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout"
+  },
+  "hero": {
+    "eyebrow": "AI-Powered Thyroid Diagnosis",
+    "tagline1": "Predict.",
+    "tagline2": "Explain.",
+    "tagline3": "Trust.",
+    "subtitle": "A transparent AI tool that detects thyroid conditions and explains every decision — so patients and doctors can trust the result.",
+    "cta_diagnose": "Get Diagnosed",
+    "cta_learn": "Learn How It Works"
+  },
+  "problem": {
+    "heading": "The Silent Epidemic",
+    "subheading": "Thyroid disorders are everywhere. Most go undetected.",
+    "stat1_num": "750M+",
+    "stat1_desc": "People worldwide affected by thyroid disorders",
+    "stat2_num": "60%",
+    "stat2_desc": "Remain undiagnosed due to vague symptoms",
+    "stat3_num": "1 in 8",
+    "stat3_desc": "Women will develop a thyroid disorder in their lifetime",
+    "para": "Symptoms like fatigue, weight change, and mood shifts are easy to dismiss. Without an AI-powered second opinion, many cases slip through undetected — especially in rural and low-resource settings."
+  },
+  "how_it_works": {
+    "heading": "How XAI Thyroid Works",
+    "subheading": "From blood test values to trusted diagnosis in seconds.",
+    "step1": "Enter Blood Test Values",
+    "step2": "AI Model Analyzes Patterns",
+    "step3": "SHAP Computes Feature Contributions",
+    "step4": "Prediction + Visual Explanation Generated",
+    "step5": "Doctor Reviews & Confirms"
+  },
+  "conditions": {
+    "heading": "Three Outcomes. One Tool.",
+    "hypo_title": "Hypothyroid",
+    "hypo_tsh": "TSH: elevated (>4.0), T3/T4: low",
+    "hypo_symptoms": "Fatigue, weight gain, cold intolerance, depression",
+    "normal_title": "Normal",
+    "normal_tsh": "TSH: 0.4–4.0, T3/T4: within range",
+    "normal_note": "Healthy thyroid function",
+    "hyper_title": "Hyperthyroid",
+    "hyper_tsh": "TSH: low (<0.4), T3/T4: elevated",
+    "hyper_symptoms": "Anxiety, weight loss, palpitations, heat intolerance"
+  },
+  "demo": {
+    "heading": "See It In Action",
+    "subheading": "Try a sample diagnosis without logging in.",
+    "preset_healthy": "Healthy Adult (35F)",
+    "preset_hypo": "Hypothyroid Case (52M)",
+    "preset_hyper": "Hyperthyroid Case (28F)",
+    "cta": "Run Full Analysis →"
+  },
+  "trust": {
+    "heading": "Transparency You Can Rely On",
+    "feat1_title": "Explainable AI",
+    "feat1_desc": "Not a black box. SHAP shows exactly which blood values drove the prediction.",
+    "feat2_title": "Visual Evidence",
+    "feat2_desc": "Color-coded waterfall charts make reasoning visible to both doctors and patients.",
+    "feat3_title": "Multilingual",
+    "feat3_desc": "Available in English, Hindi, Kannada, Tamil, French, and Spanish.",
+    "feat4_title": "Secured & Private",
+    "feat4_desc": "OWASP-compliant backend. Your health data never leaves your account."
+  },
+  "cta_section": {
+    "heading": "Start Your Diagnosis Today",
+    "subheading": "Free to use. No data sold. Designed with doctors.",
+    "btn": "Create Free Account",
+    "login_prompt": "Already have an account?",
+    "login_link": "Log in →"
+  },
+  "diagnose": {
+    "heading": "Patient Input",
+    "doctor_mode": "Doctor View",
+    "patient_mode": "Patient View",
+    "tsh_label": "TSH Level",
+    "t3_label": "T3 Level",
+    "tt4_label": "T4 (TT4)",
+    "fti_label": "FTI",
+    "age_label": "Age",
+    "sex_label": "Sex",
+    "male": "Male",
+    "female": "Female",
+    "btn_diagnose": "Diagnose",
+    "btn_analyzing": "Analyzing...",
+    "normal_range": "Normal range",
+    "placeholder": "Your diagnosis result will appear here.",
+    "demo_patients": "Demo Patients"
+  },
+  "result": {
+    "prediction": "Prediction",
+    "confidence": "Confidence",
+    "normal": "Normal Thyroid Function",
+    "hypothyroid": "Hypothyroid Detected",
+    "hyperthyroid": "Hyperthyroid Detected",
+    "shap_heading": "AI Explanation",
+    "narrative_heading": "What This Means",
+    "download": "Download Diagnosis Report",
+    "low_confidence_warn": "Low confidence — clinical tests recommended",
+    "borderline_warn": "Borderline case — model is uncertain. Clinical correlation recommended.",
+    "disclaimer": "This is an AI-generated prediction. Please consult a qualified doctor for a confirmed diagnosis."
+  },
+  "dashboard": {
+    "heading": "Your Diagnosis History",
+    "date": "Date",
+    "prediction": "Prediction",
+    "confidence": "Confidence",
+    "actions": "Actions",
+    "view": "View",
+    "delete": "Delete",
+    "empty": "No diagnoses yet.",
+    "empty_cta": "Get your first analysis →",
+    "confirm_delete": "Are you sure you want to delete this record?",
+    "page": "Page"
+  },
+  "auth": {
+    "login_tab": "Login",
+    "register_tab": "Create Account",
+    "full_name": "Full Name",
+    "email": "Email Address",
+    "password": "Password",
+    "confirm_password": "Confirm Password",
+    "language": "Preferred Language",
+    "btn_login": "Log In",
+    "btn_register": "Create Account",
+    "forgot_password": "Forgot password?",
+    "login_success": "Welcome back!",
+    "register_success": "Account created!"
+  },
+  "chatbot": {
+    "title": "Thyroid Assistant",
+    "placeholder": "Ask about thyroid health...",
+    "powered_by": "Powered by Groq",
+    "welcome": "Hello! I can answer your thyroid health questions. What would you like to know?",
+    "error": "Sorry, I encountered an error. Please try again.",
+    "send": "Send"
+  },
+  "footer": {
+    "tagline": "Predict. Explain. Trust.",
+    "disclaimer": "Not a substitute for clinical diagnosis. Always consult a healthcare professional.",
+    "rights": "All rights reserved."
+  },
+  "errors": {
+    "required": "This field is required.",
+    "email_invalid": "Please enter a valid email.",
+    "password_weak": "Password must be at least 8 characters with uppercase, number, and special character.",
+    "passwords_mismatch": "Passwords do not match.",
+    "generic": "An error occurred. Please try again.",
+    "network": "Network error. Please check your connection."
+  }
+}
