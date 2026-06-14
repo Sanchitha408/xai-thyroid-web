@@ -35,99 +35,97 @@ function detectInjection(message) {
 }
 
 // ─── POST /api/v1/chat/message ──────────────────────────────────────────────────
-exports.sendMessage = async (req, res, next) => {
+const sendMessage = async (req, res) => {
   try {
-    const { message, session_id, language = 'en' } = req.body;
-    const userId = req.user.id;
+    const { message, language } = req.body;
 
-    // Validate message length
-    if (!message || message.length > MAX_MESSAGE_LENGTH) {
-      return res.status(400).json({
-        message: `Message must be between 1 and ${MAX_MESSAGE_LENGTH} characters.`,
+    if (!message || message.trim().length === 0) {
+      return res.status(400).json({ message: 'Message is required.' });
+    }
+
+    if (message.length > 1000) {
+      return res.status(400).json({ 
+        message: 'Message too long. Max 1000 characters.' 
       });
     }
 
-    // OWASP LLM: Prompt injection check
-    if (detectInjection(message)) {
-      logger.warn('Prompt injection attempt blocked', {
-        userId,
-        contentHash: crypto.createHash('sha256').update(message).digest('hex').slice(0, 16),
-      });
-      return res.status(400).json({
-        message: 'Your message contains restricted content and cannot be processed.',
-      });
-    }
-
-    // Load or create session
-    let session = null;
-    if (session_id) {
-      session = await ChatSession.findOne({
-        where: { id: session_id, user_id: userId }, // ownership check
-      });
-    }
-    if (!session) {
-      session = await ChatSession.create({
-        user_id: userId,
-        language,
-        messages: [],
-      });
-    }
-
-    // Build conversation history (last MAX_HISTORY_MESSAGES)
-    const history = (session.messages || []).slice(-MAX_HISTORY_MESSAGES);
-    const groqMessages = [
-      { role: 'system', content: SYSTEM_PROMPT },
-      ...history.map(({ role, content }) => ({ role, content })),
-      { role: 'user', content: message },
+    // Prompt injection check
+    const injectionPatterns = [
+      'ignore previous instructions',
+      'system:',
+      'you are now',
+      'pretend you are',
+      'jailbreak',
+      'act as',
+      'DAN',
     ];
+    const lowerMsg = message.toLowerCase();
+    if (injectionPatterns.some((p) => lowerMsg.includes(p))) {
+      return res.status(400).json({ 
+        message: 'Invalid message content.' 
+      });
+    }
+
+    // System prompt for Groq
+    const systemPrompt = `You are XAI Thyroid Assistant, a helpful 
+and compassionate AI assistant for the XAI Thyroid web platform. 
+You answer questions about thyroid health, thyroid conditions 
+(hypothyroidism, hyperthyroidism, normal), blood test values 
+(TSH, T3, T4, FTI), and how AI is used to explain predictions. 
+You always advise users to consult a doctor for medical decisions. 
+You are NOT a replacement for clinical advice. If asked anything 
+outside thyroid health, say: I can only help with thyroid-related 
+questions on this platform. Keep responses under 150 words. 
+Respond in the same language the user writes in.`;
 
     // Call Groq API
-    let reply = '';
-    if (!process.env.GROQ_API_KEY) {
-      reply =
-        'The AI assistant is not configured. Please set GROQ_API_KEY in the server environment.';
-    } else {
-      const response = await axios.post(
-        GROQ_API_URL,
-        {
-          model: GROQ_MODEL,
-          messages: groqMessages,
-          max_tokens: 300,
-          temperature: 0.6,
+    const groqResponse = await fetch(
+      'https://api.groq.com/openai/v1/chat/completions',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 20000,
-        }
-      );
-      reply = response.data.choices[0].message.content.trim();
+        body: JSON.stringify({
+          model: 'llama3-8b-8192',
+          max_tokens: 300,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: message.trim() },
+          ],
+        }),
+      }
+    );
+
+    if (!groqResponse.ok) {
+      throw new Error(`Groq API error: ${groqResponse.status}`);
     }
 
-    // Append messages to session
-    const timestamp = new Date().toISOString();
-    const updatedMessages = [
-      ...history,
-      { role: 'user', content: message, timestamp },
-      { role: 'assistant', content: reply, timestamp: new Date().toISOString() },
-    ].slice(-MAX_HISTORY_MESSAGES * 2);
+    const groqData = await groqResponse.json();
+    const reply =
+      groqData.choices?.[0]?.message?.content ||
+      'I am having trouble connecting right now. Please try again.';
 
-    await session.update({ messages: updatedMessages, language });
+    return res.status(200).json({ 
+      reply,
+      session_id: null 
+    });
 
-    return res.status(200).json({ reply, session_id: session.id });
   } catch (err) {
-    if (err.response?.status === 429) {
-      return res.status(429).json({ message: 'AI service is busy. Please try again shortly.' });
-    }
-    logger.error('Chat error', { error: err.message });
-    next(err);
+    console.error('Chat error:', err.message);
+    return res.status(200).json({
+      reply:
+        'I am having trouble connecting right now. ' +
+        'Please try again in a moment. For urgent thyroid ' +
+        'questions, please consult a doctor.',
+      session_id: null,
+    });
   }
 };
 
 // ─── GET /api/v1/chat/sessions ──────────────────────────────────────────────────
-exports.getSessions = async (req, res, next) => {
+const getSessions = async (req, res, next) => {
   try {
     const sessions = await ChatSession.findAll({
       where: { user_id: req.user.id },
@@ -151,3 +149,5 @@ exports.getSessions = async (req, res, next) => {
     next(err);
   }
 };
+
+module.exports = { sendMessage, getSessions };

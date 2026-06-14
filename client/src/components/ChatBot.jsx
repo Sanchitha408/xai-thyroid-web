@@ -1,16 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MessageCircle, X, Send, Bot, User as UserIcon } from 'lucide-react';
-import useGroqChat from '../hooks/useGroqChat';
-import useAuth from '../hooks/useAuth';
 import i18n from '../i18n/i18n';
 import { animateChatOpen } from '../animations/gsapAnimations';
 
 export default function ChatBot() {
   const { t } = useTranslation();
-  const { user } = useAuth();
-  const currentLang = i18n.language || 'en';
-  const { messages, loading, sendMessage, clearSession } = useGroqChat(currentLang);
+  const currentLanguage = i18n.language || 'en';
+  const [messages, setMessages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
   const chatPanelRef = useRef(null);
@@ -26,18 +24,56 @@ export default function ChatBot() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading]);
+  }, [messages, isLoading]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const handleSend = async (e) => {
-    e.preventDefault();
-    if (!input.trim() || loading) return;
-    const currentInput = input;
+  const sendMessage = async () => {
+    if (!input.trim() || isLoading) return;
+    
+    const userMessage = input.trim();
     setInput('');
-    await sendMessage(currentInput);
+    
+    setMessages(prev => [...prev, { 
+      role: 'user', 
+      content: userMessage 
+    }]);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(
+        'https://xai-thyroid-backend.onrender.com/api/v1/chat/message',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            message: userMessage, 
+            language: currentLanguage || 'en' 
+          }),
+        }
+      );
+
+      const data = await response.json();
+      
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: data.reply || 'Sorry, I could not process that.' 
+      }]);
+    } catch (err) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: 'Connection error. Please try again.' 
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSend = (e) => {
+    e.preventDefault();
+    sendMessage();
   };
 
   return (
@@ -168,7 +204,7 @@ export default function ChatBot() {
             })}
 
             {/* Typing Indicator */}
-            {loading && (
+            {isLoading && (
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
                   <Bot size={16} className="text-primary" />
@@ -191,12 +227,12 @@ export default function ChatBot() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={t('chatbot.placeholder')}
-                disabled={loading}
+                disabled={isLoading}
                 className="form-input flex-1 py-2 text-sm bg-bg-glass"
               />
               <button
                 type="submit"
-                disabled={loading || !input.trim()}
+                disabled={isLoading || !input.trim()}
                 className="btn-primary py-2 px-3.5 shadow-none shrink-0"
               >
                 <Send size={16} />

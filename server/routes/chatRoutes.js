@@ -11,7 +11,6 @@ const { chatLimiter } = require('../middleware/rateLimiter');
 // POST /api/v1/chat/message
 router.post(
   '/message',
-  authMiddleware,
   chatLimiter,
   [
     body('message')
