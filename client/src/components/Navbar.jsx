@@ -97,7 +97,7 @@ export default function Navbar() {
           {/* ── LEFT: LOGO ── */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
-              src="https://ibb.co/21TW6G2Y"
+              src="/logo.png"
               alt="XAI Thyroid"
               className="w-8 h-8 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
             />
@@ -128,16 +128,14 @@ export default function Navbar() {
           {/* ── RIGHT: ACTIONS ── */}
           <div className="flex items-center gap-2">
 
-            {/* Language Switcher — desktop only */}
-            <div className="hidden lg:block">
-              <LanguageSwitcher />
-            </div>
+            {/* Language Switcher */}
+            <LanguageSwitcher />
 
-            {/* Not logged in — desktop only */}
+            {/* Not logged in */}
             {!user && (
-              <div className="hidden lg:flex items-center gap-2">
+              <>
                 <Link to="/auth">
-                  <button className="flex items-center px-4 py-2 rounded-full font-poppins font-medium text-sm text-[#94A3B8] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(59,130,246,0.5)] hover:bg-[rgba(59,130,246,0.08)] transition-all duration-300">
+                  <button className="hidden sm:flex items-center px-4 py-2 rounded-full font-poppins font-medium text-sm text-[#94A3B8] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(59,130,246,0.5)] hover:bg-[rgba(59,130,246,0.08)] transition-all duration-300">
                     Login
                   </button>
                 </Link>
@@ -146,12 +144,12 @@ export default function Navbar() {
                     Get Started
                   </button>
                 </Link>
-              </div>
+              </>
             )}
 
-            {/* Logged in — avatar + dropdown — desktop only */}
+            {/* Logged in — avatar + dropdown */}
             {user && (
-              <div className="hidden lg:block relative" ref={dropdownRef}>
+              <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="w-9 h-9 rounded-full bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)] flex items-center justify-center font-orbitron font-bold text-sm text-[#3B82F6] hover:bg-[rgba(59,130,246,0.25)] hover:border-[#3B82F6] hover:scale-110 transition-all duration-300"
