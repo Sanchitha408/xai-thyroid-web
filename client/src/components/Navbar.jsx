@@ -86,11 +86,10 @@ export default function Navbar() {
     <>
       {/* ── FLOATING NAVBAR ── */}
       <nav
-        className={`fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-6xl z-50 rounded-full px-6 py-3 transition-all duration-500 ${
-          scrolled
+        className={`fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-6xl z-50 rounded-full px-6 py-3 transition-all duration-500 ${scrolled
             ? 'bg-[rgba(10,15,30,0.95)] border border-[rgba(255,255,255,0.12)] shadow-[0_8px_40px_rgba(0,0,0,0.6)]'
             : 'bg-[rgba(10,15,30,0.75)] border border-[rgba(255,255,255,0.08)] shadow-[0_8px_40px_rgba(0,0,0,0.4)]'
-        }`}
+          }`}
         style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
       >
         <div className="flex items-center justify-between">
@@ -98,7 +97,7 @@ export default function Navbar() {
           {/* ── LEFT: LOGO ── */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
-              src="/android-chrome-512x512.png"
+              src="/home/sanith/Documents/xaithyroid/xai-thyroid-web/client/src/assets/logo.png"
               alt="XAI Thyroid"
               className="w-8 h-8 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
             />
@@ -113,11 +112,10 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 to={link.href}
-                className={`relative px-4 py-2 rounded-full font-poppins font-medium text-sm transition-all duration-300 ${
-                  isActive(link.href)
+                className={`relative px-4 py-2 rounded-full font-poppins font-medium text-sm transition-all duration-300 ${isActive(link.href)
                     ? 'bg-[rgba(59,130,246,0.15)] text-white'
                     : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
-                }`}
+                  }`}
               >
                 {link.name}
                 {isActive(link.href) && (
@@ -230,11 +228,10 @@ export default function Navbar() {
                 key={link.href}
                 to={link.href}
                 onClick={() => setMobileOpen(false)}
-                className={`px-4 py-3 rounded-xl font-poppins font-medium text-sm transition-all duration-200 ${
-                  isActive(link.href)
+                className={`px-4 py-3 rounded-xl font-poppins font-medium text-sm transition-all duration-200 ${isActive(link.href)
                     ? 'bg-[rgba(59,130,246,0.15)] text-white'
                     : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
-                }`}
+                  }`}
               >
                 {link.name}
               </Link>
