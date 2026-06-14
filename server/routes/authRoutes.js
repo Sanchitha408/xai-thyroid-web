@@ -20,6 +20,15 @@ const passwordValidator = body('password')
   .matches(/[!@#$%^&*(),.?":{}|<>_\-+=~`]/)
   .withMessage('Password must contain at least one special character.');
 
+router.get('/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    service: 'XAI Thyroid Backend'
+  });
+});
+
+
 // POST /api/v1/auth/register
 router.post(
   '/register',

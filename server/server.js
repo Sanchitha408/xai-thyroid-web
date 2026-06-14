@@ -37,3 +37,19 @@ process.on('unhandledRejection', (reason) => {
 });
 
 startServer();
+
+// Keep-alive ping to prevent Render free tier sleep
+if (process.env.NODE_ENV === 'production') {
+  setInterval(() => {
+    const https = require('https');
+    https.get(
+      process.env.RENDER_EXTERNAL_URL || 
+      'https://xai-thyroid-backend.onrender.com/api/v1/health',
+      (res) => {
+        console.log('Keep-alive ping sent, status:', res.statusCode);
+      }
+    ).on('error', (err) => {
+      console.log('Keep-alive ping failed:', err.message);
+    });
+  }, 14 * 60 * 1000);
+}
