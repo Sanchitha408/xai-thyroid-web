@@ -17,7 +17,7 @@ export default function Navbar() {
 
   useEffect(() => {
     initNavbarAnimation(navRef);
-    
+
     const handleScroll = () => {
       if (window.scrollY > 50) {
         setIsScrolled(true);
@@ -52,16 +52,15 @@ export default function Navbar() {
   return (
     <nav
       ref={navRef}
-      className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${
-        isScrolled
+      className={`fixed top-0 left-0 w-full z-40 transition-all duration-300 ${isScrolled
           ? 'bg-bg-dark/95 backdrop-blur-glass border-b border-border py-4 shadow-card'
           : 'bg-transparent py-6'
-      }`}
+        }`}
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-3 group">
-          <img 
+          <img
             src="/android-chrome-512x512.png"
             alt="XAI Thyroid Logo"
             className="w-9 h-9 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
@@ -77,9 +76,8 @@ export default function Navbar() {
             <Link
               key={item.path}
               to={item.path}
-              className={`nav-link font-poppins text-sm font-medium ${
-                location.pathname === item.path ? 'active' : ''
-              }`}
+              className={`nav-link font-poppins text-sm font-medium ${location.pathname === item.path ? 'active' : ''
+                }`}
             >
               {item.name}
             </Link>
@@ -126,9 +124,8 @@ export default function Navbar() {
                 key={item.path}
                 to={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
-                className={`font-poppins text-base font-medium py-2 hover:text-primary transition-colors duration-200 ${
-                  location.pathname === item.path ? 'text-primary' : 'text-muted'
-                }`}
+                className={`font-poppins text-base font-medium py-2 hover:text-primary transition-colors duration-200 ${location.pathname === item.path ? 'text-primary' : 'text-muted'
+                  }`}
               >
                 {item.name}
               </Link>
