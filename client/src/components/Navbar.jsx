@@ -97,7 +97,7 @@ export default function Navbar() {
           {/* ── LEFT: LOGO ── */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
-              src="/home/sanith/Documents/xaithyroid/xai-thyroid-web/client/src/assets/logo.png"
+              src="https://ibb.co/21TW6G2Y"
               alt="XAI Thyroid"
               className="w-8 h-8 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
             />
