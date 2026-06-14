@@ -25,10 +25,16 @@ FEATURE_DISPLAY_NAMES = {
 # ─── Resilient Imports Check ──────────────────────────────────────────────────
 try:
     import pandas as pd
-    import shap
+    import sklearn
     HAS_ML_DEPS = True
 except ImportError:
     HAS_ML_DEPS = False
+
+try:
+    import shap
+    HAS_SHAP = True
+except ImportError:
+    HAS_SHAP = False
 
 
 def load_model() -> object:
@@ -210,28 +216,51 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
         proba_arr = model.predict_proba(input_df)[0]
         confidence = float(np.max(proba_arr) * 100)
 
-        # Compute SHAP
-        try:
-            explainer = shap.TreeExplainer(model)
-            shap_vals = explainer.shap_values(input_df)
-        except Exception:
-            background = pd.DataFrame([[2.0, 1.2, 95.0, 100.0, 35, 1]], columns=FEATURE_COLUMNS)
-            explainer = shap.KernelExplainer(model.predict_proba, background)
-            shap_vals = explainer.shap_values(input_df)
-
-        if isinstance(shap_vals, list):
-            pred_class_idx = int(np.argmax(proba_arr))
-            sv = shap_vals[pred_class_idx][0]
-        else:
-            sv = shap_vals[0]
-
+        # Compute SHAP if available
         shap_list = []
-        for i, col in enumerate(FEATURE_COLUMNS):
-            shap_list.append({
-                "feature":    FEATURE_DISPLAY_NAMES[col],
-                "value":      float(input_df[col].iloc[0]),
-                "shap_value": float(sv[i]),
-            })
+        if HAS_SHAP:
+            try:
+                explainer = shap.TreeExplainer(model)
+                shap_vals = explainer.shap_values(input_df)
+                if isinstance(shap_vals, list):
+                    pred_class_idx = int(np.argmax(proba_arr))
+                    sv = shap_vals[pred_class_idx][0]
+                else:
+                    sv = shap_vals[0]
+
+                for i, col in enumerate(FEATURE_COLUMNS):
+                    shap_list.append({
+                        "feature":    FEATURE_DISPLAY_NAMES[col],
+                        "value":      float(input_df[col].iloc[0]),
+                        "shap_value": float(sv[i]),
+                    })
+            except Exception as shap_err:
+                import logging
+                logging.getLogger("xai-thyroid-ml").warning(f"SHAP tree explainer failed: {shap_err}. Trying kernel explainer...")
+                try:
+                    background = pd.DataFrame([[2.0, 1.2, 95.0, 100.0, 35, 1]], columns=FEATURE_COLUMNS)
+                    explainer = shap.KernelExplainer(model.predict_proba, background)
+                    shap_vals = explainer.shap_values(input_df)
+                    if isinstance(shap_vals, list):
+                        pred_class_idx = int(np.argmax(proba_arr))
+                        sv = shap_vals[pred_class_idx][0]
+                    else:
+                        sv = shap_vals[0]
+
+                    for i, col in enumerate(FEATURE_COLUMNS):
+                        shap_list.append({
+                            "feature":    FEATURE_DISPLAY_NAMES[col],
+                            "value":      float(input_df[col].iloc[0]),
+                            "shap_value": float(sv[i]),
+                        })
+                except Exception as shap_err2:
+                    logging.getLogger("xai-thyroid-ml").error(f"SHAP kernel explainer failed: {shap_err2}. Using fallback SHAP values.")
+
+        if not shap_list:
+            # Fall back to rule-based SHAP values corresponding to the predicted label
+            fallback_res = generate_rule_based_prediction(tsh, t3, tt4, fti, age, sex)
+            shap_list = fallback_res["shap_values"]
+
         shap_list.sort(key=lambda x: abs(x["shap_value"]), reverse=True)
 
         prob_dict = {}
@@ -250,4 +279,6 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
         }
     except Exception as e:
         # If model prediction errors out, fallback gracefully
+        import logging
+        logging.getLogger("xai-thyroid-ml").error(f"Model prediction error: {e}. Falling back to rule-based engine.", exc_info=True)
         return generate_rule_based_prediction(tsh, t3, tt4, fti, age, sex)
