@@ -29,13 +29,12 @@ async def lifespan(app: FastAPI):
     logger.info("Loading ML model...")
     try:
         ml_state["model"] = load_model()
-        logger.info("Model loaded successfully.")
-    except FileNotFoundError as e:
-        logger.warning(str(e))
-        logger.warning(
-            "Starting without a model. /predict will return 503 until "
-            "best_model.pkl is placed in ml-service/models/ and service is restarted."
-        )
+        if ml_state["model"] is None:
+            logger.warning("ML model is not loaded. Starting in rule-based fallback mode.")
+        else:
+            logger.info("Model loaded successfully.")
+    except Exception as e:
+        logger.error(f"Unexpected error in lifespan: {e}", exc_info=True)
         ml_state["model"] = None
     yield
     ml_state.clear()
@@ -113,12 +112,6 @@ async def predict(payload: PredictRequest):
       - top 6 SHAP feature contributions
     """
     model = ml_state.get("model")
-    if model is None:
-        raise HTTPException(
-            status_code=503,
-            detail="ML model not loaded. Place best_model.pkl in ml-service/models/ and restart.",
-        )
-
     try:
         result = run_prediction(
             model=model,

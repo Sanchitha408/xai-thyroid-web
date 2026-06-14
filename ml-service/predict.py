@@ -33,14 +33,41 @@ except ImportError:
 
 def load_model() -> object:
     """Load pickled model from disk if available and deps exist, otherwise returns None."""
-    if not HAS_ML_DEPS or not MODEL_PATH.exists():
-        # Fall back to rule-based explainability engine
+    import logging
+    logger = logging.getLogger("xai-thyroid-ml")
+
+    if not HAS_ML_DEPS:
+        logger.warning("HAS_ML_DEPS is False. Dependencies like pandas or shap might be missing. Using rule-based fallback.")
         return None
+
+    # If model doesn't exist, try to train a new one on the fly
+    if not MODEL_PATH.exists():
+        logger.info("best_model.pkl not found. Training a new model dynamically...")
+        try:
+            from train_dummy import main as train_model
+            train_model()
+        except Exception as e:
+            logger.error(f"Failed to train model dynamically: {e}", exc_info=True)
+
     try:
-        with open(MODEL_PATH, "rb") as f:
-            return pickle.load(f)
-    except Exception:
-        return None
+        if MODEL_PATH.exists():
+            with open(MODEL_PATH, "rb") as f:
+                model = pickle.load(f)
+                logger.info("Model loaded/unpickled successfully.")
+                return model
+    except Exception as e:
+        logger.warning(f"Failed to load best_model.pkl: {e}. Retraining a fresh model...")
+        try:
+            from train_dummy import main as train_model
+            train_model()
+            with open(MODEL_PATH, "rb") as f:
+                model = pickle.load(f)
+                logger.info("Freshly trained model loaded successfully.")
+                return model
+        except Exception as ex:
+            logger.error(f"Failed to retrain and load model: {ex}", exc_info=True)
+
+    return None
 
 
 def encode_sex(sex: str) -> int:
