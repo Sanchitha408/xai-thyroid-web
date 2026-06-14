@@ -363,3 +363,8 @@ select option {
   background-color: #1a2235;
   color: #ffffff;
 }
+
+.stat-card, .step-card, .condition-card, 
+.trust-card, .demo-panel {
+  opacity: 1 !important;
+}

@@ -8,6 +8,19 @@ export default {
         poppins: ['Poppins', 'sans-serif'],
       },
       colors: {
+        xai: {
+          bg: '#0A0F1E',
+          bgAlt: '#0D1526',
+          card: '#111827',
+          accent: '#3B82F6',
+          text: '#FFFFFF',
+          muted: '#94A3B8',
+          success: '#10B981',
+          danger: '#EF4444',
+          warning: '#F59E0B',
+          border: 'rgba(255,255,255,0.08)',
+          glass: 'rgba(255,255,255,0.04)',
+        },
         bg: {
           dark: '#0A0F1E',
           card: '#111827',

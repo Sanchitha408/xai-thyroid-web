@@ -1,8 +1,21 @@
-// services/authService.js
 import api from './api';
 
-export const register = (data) => api.post('/auth/register', data);
-export const login = (data) => api.post('/auth/login', data);
-export const logout = () => api.post('/auth/logout');
-export const getMe = () => api.get('/auth/me');
-export const updateLanguage = (lang) => api.patch('/auth/language', { lang });
+export const register = async (data) => {
+  const response = await api.post('/auth/register', data);
+  return response.data;
+};
+
+export const login = async (data) => {
+  const response = await api.post('/auth/login', data);
+  return response.data;
+};
+
+export const getMe = async () => {
+  const response = await api.get('/auth/me');
+  return response.data;
+};
+
+export const updateLanguage = async (lang) => {
+  const response = await api.patch('/auth/language', { lang });
+  return response.data;
+};

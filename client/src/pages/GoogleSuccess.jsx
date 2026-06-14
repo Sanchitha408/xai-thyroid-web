@@ -30,7 +30,7 @@ export default function GoogleSuccess() {
     const finishLogin = async () => {
       try {
         setStatus('Loading your profile…');
-        const { data } = await api.get('https://xai-thyroid-backend.onrender.com/api/v1/auth/me');
+        const { data } = await api.get('/auth/me');
         saveAuth(token, data.user);
         setStatus('Success! Redirecting…');
         // Brief 800ms delay to show success feedback

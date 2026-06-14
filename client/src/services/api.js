@@ -1,12 +1,13 @@
 import axios from 'axios';
 
+const BASE_URL = 'https://xai-thyroid-backend.onrender.com/api/v1';
+
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 
-           'https://xai-thyroid-backend.onrender.com/api/v1',
+  baseURL: BASE_URL,
   withCredentials: true,
+  timeout: 30000,
 });
 
-// Add JWT token to every request
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('xai_token');
   if (token) {
@@ -14,5 +15,15 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('xai_token');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;
