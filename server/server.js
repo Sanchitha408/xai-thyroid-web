@@ -13,10 +13,8 @@ async function startServer() {
     logger.info('PostgreSQL connection established.');
 
     // In development, auto-sync schema (use migrations in production)
-    if (process.env.NODE_ENV === 'development') {
   await sequelize.sync({ alter: false });
-  logger.info('Sequelize sync complete (development mode).');
-    }
+  logger.info('Sequelize sync complet.');
 
     app.listen(PORT, () => {
       logger.info(`XAI Thyroid server running on port ${PORT} [${process.env.NODE_ENV}]`);
