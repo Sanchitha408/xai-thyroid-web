@@ -97,11 +97,8 @@ export default function Navbar() {
             </div>
           ) : (
             <div className="flex items-center gap-3">
-              <Link to="/auth" className="btn-secondary py-2 px-4 text-sm">
+              <Link to="/auth" className="btn-primary py-2 px-4 text-sm">
                 {t('nav.login')}
-              </Link>
-              <Link to="/auth?mode=register" className="btn-primary py-2 px-4 text-sm">
-                {t('nav.register')}
               </Link>
             </div>
           )}
@@ -161,16 +158,9 @@ export default function Navbar() {
                 <Link
                   to="/auth"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="btn-secondary w-full py-2.5 text-center text-sm"
-                >
-                  {t('nav.login')}
-                </Link>
-                <Link
-                  to="/auth?mode=register"
-                  onClick={() => setIsMobileMenuOpen(false)}
                   className="btn-primary w-full py-2.5 text-center text-sm"
                 >
-                  {t('nav.register')}
+                  {t('nav.login')}
                 </Link>
               </div>
             )}
