@@ -60,9 +60,13 @@ export default function Navbar() {
     >
       <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 group">
-          <Activity className="text-primary group-hover:rotate-12 transition-transform duration-300" size={28} />
-          <span className="font-orbitron font-bold text-xl tracking-wider text-secondary group-hover:text-primary transition-colors duration-300">
+        <Link to="/" className="flex items-center gap-3 group">
+          <img 
+            src="/android-chrome-512x512.png"
+            alt="XAI Thyroid Logo"
+            className="w-9 h-9 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
+          />
+          <span className="font-orbitron font-bold text-lg text-white tracking-wider group-hover:text-[#3B82F6] transition-colors duration-300">
             XAI THYROID
           </span>
         </Link>

@@ -12,14 +12,18 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-8">
           {/* Logo & Tagline */}
           <div className="flex flex-col items-center md:items-start gap-2 text-center md:text-left">
-            <div className="flex items-center gap-2">
-              <Activity className="text-primary" size={24} />
-              <span className="font-orbitron font-bold text-lg tracking-wider text-secondary">
+            <div className="flex items-center gap-3 mb-4">
+              <img 
+                src="/android-chrome-512x512.png"
+                alt="XAI Thyroid"
+                className="w-10 h-10 rounded-lg object-contain"
+              />
+              <span className="font-orbitron font-bold text-white text-lg tracking-wider">
                 XAI THYROID
               </span>
             </div>
-            <p className="font-poppins text-xs text-muted tracking-wide uppercase">
-              {t('footer.tagline')}
+            <p className="font-poppins text-[#94A3B8] text-sm mb-6">
+              Predict. Explain. Trust.
             </p>
           </div>
 
