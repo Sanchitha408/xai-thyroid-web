@@ -151,9 +151,12 @@ export default function Auth() {
         )}
 
         {/* Google OAuth Button */}
-        <a
+        <button
           id="btn-google-oauth"
-          href={`${BACKEND_URL}/api/v1/auth/google`}
+          onClick={() => {
+            window.location.href = 
+              'https://xai-thyroid-backend.onrender.com/api/v1/auth/google';
+          }}
           className="flex items-center justify-center gap-3 w-full py-3 rounded-xl border border-border bg-bg-card hover:bg-white/5 transition-all duration-200 group mb-6"
         >
           {/* Google SVG Icon */}
@@ -166,7 +169,7 @@ export default function Auth() {
           <span className="font-orbitron text-xs font-semibold tracking-wider text-secondary group-hover:text-white transition-colors duration-150">
             Continue with Google
           </span>
-        </a>
+        </button>
 
         {/* OR Divider */}
         <div className="flex items-center gap-3 mt-6">

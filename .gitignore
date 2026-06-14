@@ -37,3 +37,6 @@ Thumbs.db
 # Python eggs
 *.egg-info/
 .pytest_cache/
+
+# Local Netlify folder
+.netlify

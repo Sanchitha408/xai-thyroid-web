@@ -75,20 +75,29 @@ router.patch(
 // ─── Google OAuth Routes ────────────────────────────────────────────────────────
 const jwt = require('jsonwebtoken');
 
-router.get('/auth/google',
-  (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.status(500).json({ 
-        message: 'Google OAuth not configured on server.' 
-      });
-    }
-    next();
-  },
+const googleAuthHandler = (req, res, next) => {
+  console.log('Google auth route hit');
+  console.log('GOOGLE_CLIENT_ID exists:', !!process.env.GOOGLE_CLIENT_ID);
+  console.log('GOOGLE_CLIENT_SECRET exists:', !!process.env.GOOGLE_CLIENT_SECRET);
+  console.log('GOOGLE_CALLBACK_URL:', process.env.GOOGLE_CALLBACK_URL);
+  
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    return res.status(500).json({ 
+      message: 'Google OAuth credentials not configured.',
+      client_id_set: !!process.env.GOOGLE_CLIENT_ID,
+      secret_set: !!process.env.GOOGLE_CLIENT_SECRET,
+      callback_url: process.env.GOOGLE_CALLBACK_URL
+    });
+  }
+  
   passport.authenticate('google', { 
     scope: ['profile', 'email'],
     session: false
-  })
-);
+  })(req, res, next);
+};
+
+router.get('/auth/google', googleAuthHandler);
+router.get('/google', googleAuthHandler);
 
 router.get('/auth/google/callback',
   passport.authenticate('google', { 
@@ -110,22 +119,6 @@ router.get('/auth/google/callback',
       res.redirect(process.env.FRONTEND_URL + '/auth?error=google_failed');
     }
   }
-);
-
-// Alias routes to support both /api/v1/auth/google and /api/v1/auth/auth/google
-router.get('/google',
-  (req, res, next) => {
-    if (!process.env.GOOGLE_CLIENT_ID) {
-      return res.status(500).json({ 
-        message: 'Google OAuth not configured on server.' 
-      });
-    }
-    next();
-  },
-  passport.authenticate('google', { 
-    scope: ['profile', 'email'],
-    session: false
-  })
 );
 
 router.get('/google/callback',

@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
-import { getMe } from '../services/authService';
+import api from '../services/api';
 
 export default function GoogleSuccess() {
   const [searchParams] = useSearchParams();
@@ -30,7 +30,7 @@ export default function GoogleSuccess() {
     const finishLogin = async () => {
       try {
         setStatus('Loading your profile…');
-        const { data } = await getMe();
+        const { data } = await api.get('https://xai-thyroid-backend.onrender.com/api/v1/auth/me');
         saveAuth(token, data.user);
         setStatus('Success! Redirecting…');
         // Brief 800ms delay to show success feedback
