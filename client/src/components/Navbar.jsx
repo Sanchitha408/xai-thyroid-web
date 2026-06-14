@@ -87,8 +87,8 @@ export default function Navbar() {
       {/* ── FLOATING NAVBAR ── */}
       <nav
         className={`fixed top-5 left-1/2 -translate-x-1/2 w-[92%] max-w-6xl z-50 rounded-full px-6 py-3 transition-all duration-500 ${scrolled
-            ? 'bg-[rgba(10,15,30,0.95)] border border-[rgba(255,255,255,0.12)] shadow-[0_8px_40px_rgba(0,0,0,0.6)]'
-            : 'bg-[rgba(10,15,30,0.75)] border border-[rgba(255,255,255,0.08)] shadow-[0_8px_40px_rgba(0,0,0,0.4)]'
+          ? 'bg-[rgba(10,15,30,0.95)] border border-[rgba(255,255,255,0.12)] shadow-[0_8px_40px_rgba(0,0,0,0.6)]'
+          : 'bg-[rgba(10,15,30,0.75)] border border-[rgba(255,255,255,0.08)] shadow-[0_8px_40px_rgba(0,0,0,0.4)]'
           }`}
         style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}
       >
@@ -113,8 +113,8 @@ export default function Navbar() {
                 key={link.href}
                 to={link.href}
                 className={`relative px-4 py-2 rounded-full font-poppins font-medium text-sm transition-all duration-300 ${isActive(link.href)
-                    ? 'bg-[rgba(59,130,246,0.15)] text-white'
-                    : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
+                  ? 'bg-[rgba(59,130,246,0.15)] text-white'
+                  : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
                   }`}
               >
                 {link.name}
@@ -128,14 +128,16 @@ export default function Navbar() {
           {/* ── RIGHT: ACTIONS ── */}
           <div className="flex items-center gap-2">
 
-            {/* Language Switcher */}
-            <LanguageSwitcher />
+            {/* Language Switcher — desktop only */}
+            <div className="hidden lg:block">
+              <LanguageSwitcher />
+            </div>
 
-            {/* Not logged in */}
+            {/* Not logged in — desktop only */}
             {!user && (
-              <>
+              <div className="hidden lg:flex items-center gap-2">
                 <Link to="/auth">
-                  <button className="hidden sm:flex items-center px-4 py-2 rounded-full font-poppins font-medium text-sm text-[#94A3B8] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(59,130,246,0.5)] hover:bg-[rgba(59,130,246,0.08)] transition-all duration-300">
+                  <button className="flex items-center px-4 py-2 rounded-full font-poppins font-medium text-sm text-[#94A3B8] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(59,130,246,0.5)] hover:bg-[rgba(59,130,246,0.08)] transition-all duration-300">
                     Login
                   </button>
                 </Link>
@@ -144,12 +146,12 @@ export default function Navbar() {
                     Get Started
                   </button>
                 </Link>
-              </>
+              </div>
             )}
 
-            {/* Logged in — avatar + dropdown */}
+            {/* Logged in — avatar + dropdown — desktop only */}
             {user && (
-              <div className="relative" ref={dropdownRef}>
+              <div className="hidden lg:block relative" ref={dropdownRef}>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   className="w-9 h-9 rounded-full bg-[rgba(59,130,246,0.15)] border border-[rgba(59,130,246,0.3)] flex items-center justify-center font-orbitron font-bold text-sm text-[#3B82F6] hover:bg-[rgba(59,130,246,0.25)] hover:border-[#3B82F6] hover:scale-110 transition-all duration-300"
@@ -229,8 +231,8 @@ export default function Navbar() {
                 to={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={`px-4 py-3 rounded-xl font-poppins font-medium text-sm transition-all duration-200 ${isActive(link.href)
-                    ? 'bg-[rgba(59,130,246,0.15)] text-white'
-                    : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
+                  ? 'bg-[rgba(59,130,246,0.15)] text-white'
+                  : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
                   }`}
               >
                 {link.name}
