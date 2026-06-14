@@ -1,46 +1,7 @@
-// config/passport.js
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { User } = require('../models');
-
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: process.env.GOOGLE_CALLBACK_URL,
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        const email = profile.emails && profile.emails[0] ? profile.emails[0].value.toLowerCase().trim() : null;
-        if (!email) {
-          return done(new Error('No email retrieved from Google profile.'), null);
-        }
-
-        // Check if user with this email already exists in DB
-        let user = await User.findOne({ where: { email } });
-        
-        if (user) {
-          // Link Google login to existing account and return
-          return done(null, user);
-        }
-
-        // If no: create new user
-        user = await User.create({
-          full_name: profile.displayName || 'Google User',
-          email,
-          password_hash: 'GOOGLE_OAUTH', // placeholder, never used for standard login
-          preferred_lang: 'en',
-          role: 'patient',
-        });
-
-        return done(null, user);
-      } catch (err) {
-        return done(err, null);
-      }
-    }
-  )
-);
+const { v4: uuidv4 } = require('uuid');
 
 passport.serializeUser((user, done) => {
   done(null, user.id);
@@ -54,5 +15,48 @@ passport.deserializeUser(async (id, done) => {
     done(err, null);
   }
 });
+
+if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+  console.warn('WARNING: Google OAuth credentials missing in .env');
+} else {
+  passport.use(
+    new GoogleStrategy(
+      {
+        clientID: process.env.GOOGLE_CLIENT_ID,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+        callbackURL: process.env.GOOGLE_CALLBACK_URL,
+      },
+      async (accessToken, refreshToken, profile, done) => {
+        try {
+          const email = profile.emails && profile.emails[0]
+            ? profile.emails[0].value
+            : null;
+
+          if (!email) {
+            return done(new Error('No email from Google profile'), null);
+          }
+
+          let user = await User.findOne({ where: { email } });
+
+          if (!user) {
+            user = await User.create({
+              id: uuidv4(),
+              email,
+              full_name: profile.displayName || 'Google User',
+              password_hash: 'GOOGLE_OAUTH',
+              role: 'patient',
+              preferred_lang: 'en',
+            });
+          }
+
+          return done(null, user);
+        } catch (err) {
+          console.error('Google OAuth error:', err);
+          return done(err, null);
+        }
+      }
+    )
+  );
+}
 
 module.exports = passport;

@@ -73,24 +73,80 @@ router.patch(
 );
 
 // ─── Google OAuth Routes ────────────────────────────────────────────────────────
-// GET /api/v1/auth/google
-router.get(
-  '/google',
-  passport.authenticate('google', { scope: ['profile', 'email'] })
+const jwt = require('jsonwebtoken');
+
+router.get('/auth/google',
+  (req, res, next) => {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ 
+        message: 'Google OAuth not configured on server.' 
+      });
+    }
+    next();
+  },
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false
+  })
 );
 
-// GET /api/v1/auth/google/callback
-router.get(
-  '/google/callback',
-  passport.authenticate('google', {
-    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth?error=google_failed`,
-    session: true
+router.get('/auth/google/callback',
+  passport.authenticate('google', { 
+    failureRedirect: process.env.FRONTEND_URL + '/auth?error=google_failed',
+    session: false
   }),
   (req, res) => {
-    // Generate JWT for the user
-    const token = authController.signToken(req.user.id);
-    // Redirect to frontend success route with token
-    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:5173'}/auth/google/success?token=${token}`);
+    try {
+      const token = jwt.sign(
+        { id: req.user.id, email: req.user.email, role: req.user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+      res.redirect(
+        process.env.FRONTEND_URL + '/auth/google/success?token=' + token
+      );
+    } catch (err) {
+      console.error('JWT signing error:', err);
+      res.redirect(process.env.FRONTEND_URL + '/auth?error=google_failed');
+    }
+  }
+);
+
+// Alias routes to support both /api/v1/auth/google and /api/v1/auth/auth/google
+router.get('/google',
+  (req, res, next) => {
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({ 
+        message: 'Google OAuth not configured on server.' 
+      });
+    }
+    next();
+  },
+  passport.authenticate('google', { 
+    scope: ['profile', 'email'],
+    session: false
+  })
+);
+
+router.get('/google/callback',
+  passport.authenticate('google', { 
+    failureRedirect: process.env.FRONTEND_URL + '/auth?error=google_failed',
+    session: false
+  }),
+  (req, res) => {
+    try {
+      const token = jwt.sign(
+        { id: req.user.id, email: req.user.email, role: req.user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+      );
+      res.redirect(
+        process.env.FRONTEND_URL + '/auth/google/success?token=' + token
+      );
+    } catch (err) {
+      console.error('JWT signing error:', err);
+      res.redirect(process.env.FRONTEND_URL + '/auth?error=google_failed');
+    }
   }
 );
 

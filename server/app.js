@@ -78,20 +78,20 @@ app.use(globalLimiter);
 // ─── Health Check ────────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => res.json({ status: 'ok', uptime: process.uptime() }));
 
-// ─── Session & Passport Middleware ─────────────────────────────────────────────
 app.set('trust proxy', 1);
+
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'fallback-secret',
+  secret: process.env.SESSION_SECRET || 'xai-thyroid-secret-key',
   resave: false,
   saveUninitialized: false,
-  store: new session.MemoryStore(),
   cookie: {
-    secure: process.env.NODE_ENV === 'production',
+    secure: false,
     httpOnly: true,
     maxAge: 24 * 60 * 60 * 1000,
-    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+    sameSite: 'lax'
   }
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 
