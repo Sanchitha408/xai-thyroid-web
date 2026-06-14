@@ -52,7 +52,7 @@ export default function App() {
           <div className="flex flex-col min-h-screen bg-bg-dark text-secondary selection:bg-primary/30 selection:text-white">
             <Navbar />
             
-            <main className="flex-grow pt-16">
+            <main className="flex-grow pt-24">
               <Routes>
                 <Route
                   path="/"
