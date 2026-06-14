@@ -5,6 +5,7 @@ import { Menu, X } from 'lucide-react';
 import gsap from 'gsap';
 import useAuth from '../hooks/useAuth';
 import LanguageSwitcher from './LanguageSwitcher';
+import Logo from "../assets/logo.png";
 
 const links = [
   { name: 'Home', href: '/' },
@@ -97,10 +98,10 @@ export default function Navbar() {
           {/* ── LEFT: LOGO ── */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
-              src="/assets/android-chrome-512x512.png"
-              alt="XAI Thyroid"
-              className="w-8 h-8 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
-            />
+  src={Logo}
+  alt="XAI Thyroid"
+  className="w-8 h-8 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
+/>
             <span className="font-orbitron font-bold text-base text-white tracking-wider group-hover:text-[#3B82F6] transition-colors duration-300 hidden sm:block">
               XAI THYROID
             </span>
