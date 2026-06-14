@@ -98,10 +98,10 @@ export default function Navbar() {
           {/* ── LEFT: LOGO ── */}
           <Link to="/" className="flex items-center gap-3 group">
             <img
-  src={Logo}
-  alt="XAI Thyroid"
-  className="w-8 h-8 rounded-lg object-contain group-hover:scale-110 transition-transform duration-300"
-/>
+              src={Logo}
+              alt="XAI Thyroid"
+              className="w-10 h-10 bg-white p-1 rounded-lg object-contain border-2 border-red-500"
+              />
             <span className="font-orbitron font-bold text-base text-white tracking-wider group-hover:text-[#3B82F6] transition-colors duration-300 hidden sm:block">
               XAI THYROID
             </span>
