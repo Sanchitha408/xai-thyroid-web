@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle, X, Send, Bot, User as UserIcon } from 'lucide-react';
+import { MessageCircle, X, Send, Bot, User as UserIcon, Volume2, VolumeX } from 'lucide-react';
 import i18n from '../i18n/i18n';
 import { animateChatOpen } from '../animations/gsapAnimations';
 
@@ -11,6 +11,8 @@ export default function ChatBot() {
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState('');
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const chatPanelRef = useRef(null);
   const messagesEndRef = useRef(null);
 
@@ -19,6 +21,12 @@ export default function ChatBot() {
     if (isOpen) {
       animateChatOpen(chatPanelRef);
       scrollToBottom();
+    } else {
+      // On chatbot close (when panel closes)
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+      }
     }
   }, [isOpen]);
 
@@ -28,6 +36,36 @@ export default function ChatBot() {
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const speakText = (text, language) => {
+    if (!voiceEnabled) return;
+    if (!window.speechSynthesis) return;
+    
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    
+    // Map app language codes to BCP-47 speech codes
+    const langMap = {
+      en: 'en-US',
+      hi: 'hi-IN',
+      kn: 'kn-IN',
+      ta: 'ta-IN',
+      fr: 'fr-FR',
+      es: 'es-ES',
+    };
+    utterance.lang = langMap[language] || 'en-US';
+    utterance.rate = 0.95;
+    utterance.pitch = 1;
+    utterance.volume = 0.9;
+    
+    utterance.onstart = () => setIsSpeaking(true);
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
+    
+    window.speechSynthesis.speak(utterance);
   };
 
   const sendMessage = async () => {
@@ -57,10 +95,12 @@ export default function ChatBot() {
 
       const data = await response.json();
       
+      const replyText = data.reply || 'Sorry, I could not process that.';
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: data.reply || 'Sorry, I could not process that.' 
+        content: replyText 
       }]);
+      speakText(replyText, currentLanguage);
     } catch (err) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
@@ -152,12 +192,21 @@ export default function ChatBot() {
                 {t('chatbot.title')}
               </span>
             </div>
-            <button
-              onClick={() => setIsOpen(false)}
-              className="text-muted hover:text-secondary transition-colors duration-200"
-            >
-              <X size={20} />
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setVoiceEnabled(!voiceEnabled)}
+                className="w-8 h-8 rounded-full bg-bg-glass border border-border flex items-center justify-center text-muted hover:text-primary hover:border-primary transition-all duration-200"
+                title={voiceEnabled ? "Mute Voice" : "Enable Voice"}
+              >
+                {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
+              </button>
+              <button
+                onClick={() => setIsOpen(false)}
+                className="text-muted hover:text-secondary transition-colors duration-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
           </div>
 
           {/* Messages area */}
@@ -175,29 +224,50 @@ export default function ChatBot() {
             {/* Render conversation */}
             {messages.map((msg, index) => {
               const isUser = msg.role === 'user';
+              const isLastMessage = index === messages.length - 1;
               return (
-                <div
-                  key={index}
-                  className={`flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}
-                >
-                  {!isUser && (
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                      <Bot size={16} className="text-primary" />
+                <div key={index} className="flex flex-col gap-2">
+                  <div className={`flex items-start gap-2.5 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                    {!isUser && (
+                      <div className="flex items-center gap-1">
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
+                          <Bot size={16} className="text-primary" />
+                        </div>
+                        {isLastMessage && isSpeaking && (
+                          <div className="flex items-end gap-[2px] h-4 px-1">
+                            <span className="equalizer-bar"></span>
+                            <span className="equalizer-bar"></span>
+                            <span className="equalizer-bar"></span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div
+                      className={`py-2 px-3.5 rounded-2xl text-sm ${
+                        isUser
+                          ? 'bg-primary text-white rounded-tr-none max-w-[80%] shadow-glow-sm'
+                          : 'bg-bg-glass border border-border rounded-tl-none max-w-[80%] text-secondary'
+                      }`}
+                    >
+                      {msg.content}
                     </div>
-                  )}
-                  <div
-                    className={`py-2 px-3.5 rounded-2xl text-sm ${
-                      isUser
-                        ? 'bg-primary text-white rounded-tr-none max-w-[80%] shadow-glow-sm'
-                        : 'bg-bg-glass border border-border rounded-tl-none max-w-[80%] text-secondary'
-                    }`}
-                  >
-                    {msg.content}
+                    {isUser && (
+                      <div className="w-8 h-8 rounded-full bg-bg-glass border border-border flex items-center justify-center shrink-0">
+                        <UserIcon size={16} className="text-muted" />
+                      </div>
+                    )}
                   </div>
-                  {isUser && (
-                    <div className="w-8 h-8 rounded-full bg-bg-glass border border-border flex items-center justify-center shrink-0">
-                      <UserIcon size={16} className="text-muted" />
-                    </div>
+                  {/* Stop button below the last assistant message if currently speaking */}
+                  {!isUser && isLastMessage && isSpeaking && (
+                    <button
+                      onClick={() => {
+                        window.speechSynthesis.cancel();
+                        setIsSpeaking(false);
+                      }}
+                      className="mt-1 ml-[44px] self-start flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-glass border border-border text-xs text-muted hover:text-primary hover:border-primary transition-all duration-200 shadow-sm"
+                    >
+                      <span>⏹</span> Stop
+                    </button>
                   )}
                 </div>
               );

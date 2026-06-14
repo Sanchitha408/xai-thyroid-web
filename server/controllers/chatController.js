@@ -3,6 +3,7 @@ const axios = require('axios');
 const { ChatSession } = require('../models');
 const logger = require('../utils/logger');
 const crypto = require('crypto');
+const fetch = globalThis.fetch || require('node-fetch');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const GROQ_MODEL = 'llama3-8b-8192';
@@ -36,6 +37,7 @@ function detectInjection(message) {
 
 // ─── POST /api/v1/chat/message ──────────────────────────────────────────────────
 const sendMessage = async (req, res) => {
+  console.log('GROQ KEY EXISTS:', !!process.env.GROQ_API_KEY);
   try {
     const { message, language } = req.body;
 
@@ -113,7 +115,12 @@ Respond in the same language the user writes in.`;
     });
 
   } catch (err) {
-    console.error('Chat error:', err.message);
+    console.error('GROQ API FULL ERROR:', {
+      message: err.message,
+      status: err.status,
+      stack: err.stack,
+      groqKeyExists: !!process.env.GROQ_API_KEY
+    });
     return res.status(200).json({
       reply:
         'I am having trouble connecting right now. ' +

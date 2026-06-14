@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Stethoscope, Loader2, Sparkles } from 'lucide-react';
 import DiagnosisForm from '../components/DiagnosisForm';
 import ResultPanel from '../components/ResultPanel';
+import DiagnosisLoader from '../components/DiagnosisLoader';
 import { predict } from '../services/diagnosisService';
 
 export default function Diagnose() {
@@ -77,14 +78,8 @@ export default function Diagnose() {
           {/* Right panel: Live Results Display */}
           <div className="lg:col-span-7 flex flex-col gap-6 h-full min-h-[450px]">
             {loading && (
-              <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-bg-card/40 border border-border rounded-2xl p-6 text-center">
-                <Loader2 className="text-primary animate-spin mb-4" size={40} />
-                <p className="font-orbitron font-semibold text-sm tracking-wider text-secondary">
-                  {t('diagnose.btn_analyzing')}
-                </p>
-                <p className="text-xs text-muted mt-2 max-w-xs leading-relaxed">
-                  Computing model predictions and running local SHAP contributions calculations. Please wait...
-                </p>
+              <div className="flex flex-col items-center justify-center h-full min-h-[400px] bg-bg-card/40 border border-border rounded-2xl p-6 text-center backdrop-blur-glass">
+                <DiagnosisLoader isVisible={loading} />
               </div>
             )}
 

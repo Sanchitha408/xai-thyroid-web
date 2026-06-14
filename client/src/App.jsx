@@ -5,6 +5,7 @@ import Footer from './components/Footer';
 import ChatBot from './components/ChatBot';
 import Home from './pages/Home';
 import Diagnose from './pages/Diagnose';
+import Compare from './pages/Compare';
 import Dashboard from './pages/Dashboard';
 import Auth from './pages/Auth';
 import About from './pages/About';
@@ -51,7 +52,7 @@ export default function App() {
           <div className="flex flex-col min-h-screen bg-bg-dark text-secondary selection:bg-primary/30 selection:text-white">
             <Navbar />
             
-            <main className="flex-grow">
+            <main className="flex-grow pt-16">
               <Routes>
                 <Route
                   path="/"
@@ -67,6 +68,16 @@ export default function App() {
                     <RouteWrapper>
                       <Diagnose />
                     </RouteWrapper>
+                  }
+                />
+                <Route
+                  path="/compare"
+                  element={
+                    <ProtectedRoute>
+                      <RouteWrapper>
+                        <Compare />
+                      </RouteWrapper>
+                    </ProtectedRoute>
                   }
                 />
                 <Route
