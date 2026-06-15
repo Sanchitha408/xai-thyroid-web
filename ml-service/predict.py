@@ -317,7 +317,12 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
 
         prob_dict = {}
         for cls, prob in zip(model.classes_, proba_arr):
-            label = CLASS_LABELS[int(cls)] if isinstance(cls, (int, np.integer)) else str(cls)
+            # model.classes_ may be int, np.integer, float, or np.floating
+            if isinstance(cls, (int, float, np.integer, np.floating)):
+                idx = int(cls)
+                label = CLASS_LABELS[idx] if idx < len(CLASS_LABELS) else str(cls)
+            else:
+                label = str(cls)
             prob_dict[label] = round(float(prob) * 100, 2)
         
         for label in CLASS_LABELS:

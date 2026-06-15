@@ -143,7 +143,14 @@ exports.predict = async (req, res, next) => {
       record_id: record.id,
     });
   } catch (err) {
-    // Surface ML service errors clearly
+    // Log full error details regardless
+    console.error('[diagnosisController.predict] FULL ERROR:', {
+      message: err.message,
+      code: err.code,
+      stack: err.stack,
+    });
+
+    // Surface ML service errors clearly as 503
     if (err.message && err.message.includes('ML service')) {
       return res.status(503).json({ message: err.message });
     }
