@@ -27,15 +27,13 @@ ml_state: dict = {}
 async def lifespan(app: FastAPI):
     """Load model once on startup, release on shutdown."""
     logger.info("Loading ML model...")
-    try:
-        ml_state["model"] = load_model()
-        if ml_state["model"] is None:
-            logger.warning("ML model is not loaded. Starting in rule-based fallback mode.")
-        else:
-            logger.info("Model loaded successfully.")
-    except Exception as e:
-        logger.error(f"Unexpected error in lifespan: {e}", exc_info=True)
-        ml_state["model"] = None
+    # Propagate exception to fail loudly at startup if load_model() raises an error.
+    # If ML_FALLBACK_ENABLED=1, load_model() returns None and does not raise an error.
+    ml_state["model"] = load_model()
+    if ml_state["model"] is None:
+        logger.warning("ML model is not loaded. Starting in rule-based fallback mode.")
+    else:
+        logger.info("Model loaded successfully.")
     yield
     ml_state.clear()
     logger.info("ML service shut down.")
