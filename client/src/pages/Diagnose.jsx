@@ -25,16 +25,15 @@ export default function Diagnose() {
     try {
       const response = await predict(formData);
       
-      console.log('Diagnosis API response:', response);
-      console.log('Diagnosis API data:', response.data);
-
       const result = response;
 
+      console.log('RAW AXIOS RESPONSE:', response);
+      console.log('RESPONSE.DATA:', response.data);
+      console.log('SERVICE RETURN VALUE:', result);
+
       if (!result || !result.prediction) {
-        throw new Error(
-          result?.message ||
-          'Prediction service unavailable'
-        );
+        console.error('Invalid prediction response', result);
+        throw new Error('Prediction response malformed');
       }
 
       setResult({
