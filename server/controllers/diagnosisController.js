@@ -5,7 +5,7 @@ const { getPrediction } = require('../utils/mlBridge');
 const logger = require('../utils/logger');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama3-8b-8192';
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 
 /** Generate SHAP narrative from Groq */
 async function generateShapNarrative(inputData, predictionData, lang = 'en') {
@@ -55,7 +55,14 @@ Language: ${lang}`;
     );
     return response.data.choices[0].message.content.trim();
   } catch (err) {
-    logger.error('Groq narrative generation failed', { error: err.message });
+    if (err.response) {
+      logger.error('GROQ RAW ERROR:', {
+        status: err.response.status,
+        body: err.response.data,
+      });
+    } else {
+      logger.error('Groq narrative generation failed', { error: err.message });
+    }
     return 'Based on your test results, the AI analysis indicates the above prediction. Please consult a qualified doctor for a confirmed diagnosis.';
   }
 }

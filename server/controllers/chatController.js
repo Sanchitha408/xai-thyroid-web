@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const fetch = globalThis.fetch || require('node-fetch');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama3-8b-8192';
+const GROQ_MODEL = 'llama-3.1-8b-instant';
 const MAX_HISTORY_MESSAGES = 10;
 const MAX_MESSAGE_LENGTH = 1000;
 
@@ -90,7 +90,7 @@ Respond in the same language the user writes in.`;
           Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
         },
         body: JSON.stringify({
-          model: 'llama3-8b-8192',
+          model: GROQ_MODEL,
           max_tokens: 300,
           messages: [
             { role: 'system', content: systemPrompt },
@@ -101,15 +101,15 @@ Respond in the same language the user writes in.`;
     );
 
     if (!groqResponse.ok) {
-  const errorText = await groqResponse.text();
+      const errorText = await groqResponse.text();
 
-  console.error('GROQ RAW ERROR:', {
-    status: groqResponse.status,
-    body: errorText,
-  });
+      console.error('GROQ RAW ERROR:', {
+        status: groqResponse.status,
+        body: errorText,
+      });
 
-  throw new Error(`Groq API error: ${groqResponse.status}`);
-}
+      throw new Error(`Groq API error: ${groqResponse.status}`);
+    }
 
     const groqData = await groqResponse.json();
     const reply =

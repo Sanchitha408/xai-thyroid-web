@@ -12,7 +12,7 @@ React 18 + Vite (port 5173)
      │
      ▼ REST API (Axios)
 Node.js + Express (port 5000)  ←→  PostgreSQL 15
-     │                         ←→  Groq API (llama3-8b-8192)
+     │                         ←→  Groq API (llama-3.1-8b-instant)
      ▼ HTTP
 Python FastAPI ML Service (port 8000)
      └── scikit-learn / xgboost + SHAP
@@ -135,7 +135,7 @@ The model must:
 | Backend | Node.js v20, Express.js v4 |
 | ORM | Sequelize v6 + PostgreSQL 15 |
 | Auth | JWT + bcryptjs |
-| AI | Groq API (llama3-8b-8192) |
+| AI | Groq API (llama-3.1-8b-instant) |
 | ML Service | Python FastAPI, scikit-learn, XGBoost, SHAP |
 
 ---
