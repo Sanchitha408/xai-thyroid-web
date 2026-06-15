@@ -24,19 +24,33 @@ export default function Diagnose() {
 
     try {
       const response = await predict(formData);
-      const data = response.data;
       
-      // Expected backend response: { success: true, record_id: "...", prediction: "...", confidence: 0.95, explanation: "...", shap: [...] }
+      console.log('Diagnosis API response:', response);
+      console.log('Diagnosis API data:', response.data);
+
+      const result = response;
+
+      if (!result || !result.prediction) {
+        throw new Error(
+          result?.message ||
+          'Prediction service unavailable'
+        );
+      }
+
       setResult({
-        prediction: data.prediction,
-        confidence: data.confidence,
-        explanation: data.explanation,
-        shap: data.shap
+        prediction: result.prediction,
+        confidence: result.confidence,
+        probabilities: result.probabilities,
+        shap_values: result.shap_values,
+        shap_narrative: result.shap_narrative,
+        // Maintain compatibility with components expecting explanation/shap
+        explanation: result.shap_narrative,
+        shap: result.shap_values
       });
-      setRecordId(data.record_id);
+      setRecordId(result.record_id);
     } catch (err) {
       console.error('Diagnosis failed:', err);
-      const errMsg = err.response?.data?.message || t('errors.generic');
+      const errMsg = err.response?.data?.message || err.message || t('errors.generic');
       setError(errMsg);
     } finally {
       setLoading(false);

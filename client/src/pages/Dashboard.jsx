@@ -60,15 +60,25 @@ export default function Dashboard() {
     try {
       const { data } = await getRecord(record.id);
       // Expect record from DB:
-      // data.record = { id, prediction, confidence, explanation, shap_values, patient_data }
       setSelectedRecord({
         id: data.record.id,
         prediction: data.record.prediction,
         confidence: data.record.confidence,
-        explanation: data.record.explanation,
+        probabilities: data.record.probabilities,
+        shap_values: data.record.shap_values,
+        shap_narrative: data.record.shap_narrative,
+        // Maintain compatibility with components expecting explanation/shap
+        explanation: data.record.explanation || data.record.shap_narrative,
         shap: data.record.shap_values
       });
-      setSelectedPatientData(data.record.patient_data);
+      setSelectedPatientData(data.record.patient_data || {
+        tsh: data.record.tsh,
+        t3: data.record.t3,
+        tt4: data.record.tt4,
+        fti: data.record.fti,
+        age: data.record.age,
+        sex: data.record.sex
+      });
       // Scroll to view details dynamically
       setTimeout(() => {
         document.getElementById('dashboard-details-section')?.scrollIntoView({ behavior: 'smooth' });
