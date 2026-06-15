@@ -6,9 +6,14 @@ const crypto = require('crypto');
 const fetch = globalThis.fetch || require('node-fetch');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.1-8b-instant';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+const FALLBACK_MODEL = 'llama-3.1-8b-instant';
 const MAX_HISTORY_MESSAGES = 10;
 const MAX_MESSAGE_LENGTH = 1000;
+
+// Log at startup so Render logs show exactly which model is configured
+console.log('[STARTUP] chatController loaded from:', __filename);
+console.log('[STARTUP] GROQ_MODEL resolved to:', GROQ_MODEL);
 
 // OWASP LLM: Prompt injection blocklist (case-insensitive)
 const INJECTION_PATTERNS = [
@@ -35,9 +40,51 @@ function detectInjection(message) {
   return INJECTION_PATTERNS.some((pattern) => pattern.test(message));
 }
 
+/**
+ * Call Groq API with automatic model fallback.
+ * If the primary model is rejected (decommissioned), retries with FALLBACK_MODEL.
+ */
+async function callGroq(messages, maxTokens = 300, model = GROQ_MODEL) {
+  console.log('GROQ MODEL USED:', model);
+  console.log('CONTROLLER FILE:', __filename);
+
+  const response = await fetch(GROQ_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: maxTokens,
+      messages,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('GROQ RAW ERROR:', {
+      status: response.status,
+      body: errorText,
+      modelUsed: model,
+    });
+
+    // If model was decommissioned and we haven't tried fallback yet, retry
+    if (errorText.includes('model_decommissioned') && model !== FALLBACK_MODEL) {
+      console.warn(`[GROQ FALLBACK] Model "${model}" decommissioned. Retrying with "${FALLBACK_MODEL}"`);
+      return callGroq(messages, maxTokens, FALLBACK_MODEL);
+    }
+
+    throw new Error(`Groq API error: ${response.status} — ${errorText}`);
+  }
+
+  return response.json();
+}
+
 // ─── POST /api/v1/chat/message ──────────────────────────────────────────────────
 const sendMessage = async (req, res) => {
   console.log('GROQ KEY EXISTS:', !!process.env.GROQ_API_KEY);
+  console.log('GROQ_MODEL CONST:', GROQ_MODEL);
   try {
     const { message, language } = req.body;
 
@@ -80,38 +127,12 @@ outside thyroid health, say: I can only help with thyroid-related
 questions on this platform. Keep responses under 150 words. 
 Respond in the same language the user writes in.`;
 
-    // Call Groq API
-    const groqResponse = await fetch(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: GROQ_MODEL,
-          max_tokens: 300,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: message.trim() },
-          ],
-        }),
-      }
-    );
+    // Call Groq API with fallback
+    const groqData = await callGroq([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: message.trim() },
+    ], 300);
 
-    if (!groqResponse.ok) {
-      const errorText = await groqResponse.text();
-
-      console.error('GROQ RAW ERROR:', {
-        status: groqResponse.status,
-        body: errorText,
-      });
-
-      throw new Error(`Groq API error: ${groqResponse.status}`);
-    }
-
-    const groqData = await groqResponse.json();
     const reply =
       groqData.choices?.[0]?.message?.content ||
       'I am having trouble connecting right now. Please try again.';
@@ -126,7 +147,9 @@ Respond in the same language the user writes in.`;
       message: err.message,
       status: err.status,
       stack: err.stack,
-      groqKeyExists: !!process.env.GROQ_API_KEY
+      groqKeyExists: !!process.env.GROQ_API_KEY,
+      groqModel: GROQ_MODEL,
+      controllerFile: __filename,
     });
     return res.status(200).json({
       reply:

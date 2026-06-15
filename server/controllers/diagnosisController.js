@@ -5,9 +5,14 @@ const { getPrediction } = require('../utils/mlBridge');
 const logger = require('../utils/logger');
 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_MODEL = 'llama-3.1-8b-instant';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+const FALLBACK_MODEL = 'llama-3.1-8b-instant';
 
-/** Generate SHAP narrative from Groq */
+// Log at startup so Render logs show exactly which model is configured
+console.log('[STARTUP] diagnosisController loaded from:', __filename);
+console.log('[STARTUP] GROQ_MODEL resolved to:', GROQ_MODEL);
+
+/** Generate SHAP narrative from Groq with automatic model fallback */
 async function generateShapNarrative(inputData, predictionData, lang = 'en') {
   if (!process.env.GROQ_API_KEY) {
     return 'AI narrative unavailable — GROQ_API_KEY not configured. Please consult a qualified doctor for a confirmed diagnosis.';
@@ -33,11 +38,14 @@ Always end with 'Please consult a qualified doctor for a confirmed diagnosis.'`;
 Generate a patient-friendly explanation of this result.
 Language: ${lang}`;
 
-  try {
+  async function tryGroq(model) {
+    console.log('GROQ MODEL USED (diagnosis):', model);
+    console.log('CONTROLLER FILE:', __filename);
+
     const response = await axios.post(
       GROQ_API_URL,
       {
-        model: GROQ_MODEL,
+        model,
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: userMessage },
@@ -54,15 +62,33 @@ Language: ${lang}`;
       }
     );
     return response.data.choices[0].message.content.trim();
+  }
+
+  try {
+    return await tryGroq(GROQ_MODEL);
   } catch (err) {
+    // Log the error details
     if (err.response) {
       logger.error('GROQ RAW ERROR:', {
         status: err.response.status,
         body: err.response.data,
+        modelUsed: GROQ_MODEL,
       });
+
+      // If model was decommissioned and we haven't tried fallback yet, retry
+      const errBody = JSON.stringify(err.response.data || '');
+      if (errBody.includes('model_decommissioned') && GROQ_MODEL !== FALLBACK_MODEL) {
+        console.warn(`[GROQ FALLBACK] Model "${GROQ_MODEL}" decommissioned. Retrying with "${FALLBACK_MODEL}"`);
+        try {
+          return await tryGroq(FALLBACK_MODEL);
+        } catch (fallbackErr) {
+          logger.error('GROQ FALLBACK also failed:', { error: fallbackErr.message });
+        }
+      }
     } else {
       logger.error('Groq narrative generation failed', { error: err.message });
     }
+
     return 'Based on your test results, the AI analysis indicates the above prediction. Please consult a qualified doctor for a confirmed diagnosis.';
   }
 }
