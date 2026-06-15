@@ -101,8 +101,15 @@ Respond in the same language the user writes in.`;
     );
 
     if (!groqResponse.ok) {
-      throw new Error(`Groq API error: ${groqResponse.status}`);
-    }
+  const errorText = await groqResponse.text();
+
+  console.error('GROQ RAW ERROR:', {
+    status: groqResponse.status,
+    body: errorText,
+  });
+
+  throw new Error(`Groq API error: ${groqResponse.status}`);
+}
 
     const groqData = await groqResponse.json();
     const reply =
