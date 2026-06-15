@@ -1,12 +1,16 @@
 """
 predict.py — ML inference and SHAP explanation for XAI Thyroid.
-Resilient to missing dependencies (e.g. Python 3.14 compilation issues)
-with realistic mathematical rule-based fallback.
+Loads best_model.pkl and refuses to start with a silent retrain.
+Rule-based fallback only when ML_FALLBACK_ENABLED=1 (dev mode).
 """
 
+import os
 import pickle
 import numpy as np
 from pathlib import Path
+import logging
+
+logger = logging.getLogger("xai-thyroid-ml")
 
 # ─── Constants ─────────────────────────────────────────────────────────────────
 MODEL_PATH = Path(__file__).parent / "models" / "best_model.pkl"
@@ -38,42 +42,79 @@ except ImportError:
 
 
 def load_model() -> object:
-    """Load pickled model from disk if available and deps exist, otherwise returns None."""
-    import logging
-    logger = logging.getLogger("xai-thyroid-ml")
+    """
+    Load pickled model from disk.
+    Fails loudly if model cannot be loaded — NO silent retrain.
+    Only falls back to None if ML_FALLBACK_ENABLED=1 is explicitly set.
+    """
+    # ─── Startup version logging ───────────────────────────────────────────
+    logger.info("=" * 60)
+    logger.info("ML SERVICE STARTUP DIAGNOSTICS")
+    logger.info(f"  Python:       {__import__('sys').version}")
+    logger.info(f"  numpy:        {np.__version__}")
+    if HAS_ML_DEPS:
+        logger.info(f"  scikit-learn: {sklearn.__version__}")
+        logger.info(f"  pandas:       {pd.__version__}")
+    else:
+        logger.warning("  scikit-learn/pandas: NOT AVAILABLE")
+    if HAS_SHAP:
+        logger.info(f"  shap:         {shap.__version__}")
+    else:
+        logger.warning("  shap:         NOT AVAILABLE")
+    logger.info(f"  Model path:   {MODEL_PATH}")
+    logger.info(f"  Model exists: {MODEL_PATH.exists()}")
+    logger.info(f"  __file__:     {__file__}")
+    logger.info("=" * 60)
+
+    allow_fallback = os.environ.get("ML_FALLBACK_ENABLED", "0") == "1"
 
     if not HAS_ML_DEPS:
-        logger.warning("HAS_ML_DEPS is False. Dependencies like pandas or shap might be missing. Using rule-based fallback.")
-        return None
+        msg = "CRITICAL: scikit-learn or pandas not installed. Cannot load ML model."
+        if allow_fallback:
+            logger.warning(msg + " Running in rule-based fallback mode (ML_FALLBACK_ENABLED=1).")
+            return None
+        else:
+            logger.error(msg)
+            raise RuntimeError(msg)
 
-    # If model doesn't exist, try to train a new one on the fly
     if not MODEL_PATH.exists():
-        logger.info("best_model.pkl not found. Training a new model dynamically...")
-        try:
-            from train_dummy import main as train_model
-            train_model()
-        except Exception as e:
-            logger.error(f"Failed to train model dynamically: {e}", exc_info=True)
+        msg = f"CRITICAL: Model file not found at {MODEL_PATH}. Deploy best_model.pkl to this path."
+        if allow_fallback:
+            logger.warning(msg + " Running in rule-based fallback mode (ML_FALLBACK_ENABLED=1).")
+            return None
+        else:
+            logger.error(msg)
+            raise FileNotFoundError(msg)
 
     try:
-        if MODEL_PATH.exists():
-            with open(MODEL_PATH, "rb") as f:
-                model = pickle.load(f)
-                logger.info("Model loaded/unpickled successfully.")
-                return model
-    except Exception as e:
-        logger.warning(f"Failed to load best_model.pkl: {e}. Retraining a fresh model...")
-        try:
-            from train_dummy import main as train_model
-            train_model()
-            with open(MODEL_PATH, "rb") as f:
-                model = pickle.load(f)
-                logger.info("Freshly trained model loaded successfully.")
-                return model
-        except Exception as ex:
-            logger.error(f"Failed to retrain and load model: {ex}", exc_info=True)
+        with open(MODEL_PATH, "rb") as f:
+            model = pickle.load(f)
 
-    return None
+        # Validate model has required methods
+        if not hasattr(model, 'predict') or not hasattr(model, 'predict_proba'):
+            raise ValueError(f"Loaded object ({type(model).__name__}) lacks predict/predict_proba methods.")
+
+        logger.info(f"Model loaded successfully!")
+        logger.info(f"  Model type:    {type(model).__name__}")
+        logger.info(f"  Model classes: {model.classes_}")
+        if hasattr(model, 'n_estimators'):
+            logger.info(f"  Estimators:    {model.n_estimators}")
+        return model
+
+    except Exception as e:
+        msg = (
+            f"CRITICAL: Failed to load best_model.pkl: {e}\n"
+            f"  This usually means the model was pickled with different library versions.\n"
+            f"  Current: numpy={np.__version__}, sklearn={sklearn.__version__}\n"
+            f"  Fix: Retrain the model using the SAME versions listed in requirements.txt,\n"
+            f"  then commit the new best_model.pkl."
+        )
+        if allow_fallback:
+            logger.warning(msg + "\n  Running in rule-based fallback mode (ML_FALLBACK_ENABLED=1).")
+            return None
+        else:
+            logger.error(msg)
+            raise RuntimeError(msg) from e
 
 
 def encode_sex(sex: str) -> int:
@@ -197,6 +238,7 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
     rule-based explainability engine.
     """
     if model is None or not HAS_ML_DEPS:
+        logger.warning("Using rule-based fallback prediction (no ML model loaded).")
         return generate_rule_based_prediction(tsh, t3, tt4, fti, age, sex)
 
     try:
@@ -222,8 +264,15 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
             try:
                 explainer = shap.TreeExplainer(model)
                 shap_vals = explainer.shap_values(input_df)
-                if isinstance(shap_vals, list):
-                    pred_class_idx = int(np.argmax(proba_arr))
+
+                # Extract SHAP values for the predicted class
+                pred_class_idx = int(np.argmax(proba_arr))
+
+                if isinstance(shap_vals, np.ndarray) and shap_vals.ndim == 3:
+                    # New shap (>=0.52): shape (n_samples, n_features, n_classes)
+                    sv = shap_vals[0, :, pred_class_idx]
+                elif isinstance(shap_vals, list):
+                    # Legacy shap: list of arrays per class
                     sv = shap_vals[pred_class_idx][0]
                 else:
                     sv = shap_vals[0]
@@ -235,14 +284,17 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
                         "shap_value": float(sv[i]),
                     })
             except Exception as shap_err:
-                import logging
-                logging.getLogger("xai-thyroid-ml").warning(f"SHAP tree explainer failed: {shap_err}. Trying kernel explainer...")
+                logger.warning(f"SHAP tree explainer failed: {shap_err}. Trying kernel explainer...")
                 try:
                     background = pd.DataFrame([[2.0, 1.2, 95.0, 100.0, 35, 1]], columns=FEATURE_COLUMNS)
                     explainer = shap.KernelExplainer(model.predict_proba, background)
                     shap_vals = explainer.shap_values(input_df)
-                    if isinstance(shap_vals, list):
-                        pred_class_idx = int(np.argmax(proba_arr))
+
+                    pred_class_idx = int(np.argmax(proba_arr))
+
+                    if isinstance(shap_vals, np.ndarray) and shap_vals.ndim == 3:
+                        sv = shap_vals[0, :, pred_class_idx]
+                    elif isinstance(shap_vals, list):
                         sv = shap_vals[pred_class_idx][0]
                     else:
                         sv = shap_vals[0]
@@ -254,7 +306,7 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
                             "shap_value": float(sv[i]),
                         })
                 except Exception as shap_err2:
-                    logging.getLogger("xai-thyroid-ml").error(f"SHAP kernel explainer failed: {shap_err2}. Using fallback SHAP values.")
+                    logger.error(f"SHAP kernel explainer failed: {shap_err2}. Using fallback SHAP values.")
 
         if not shap_list:
             # Fall back to rule-based SHAP values corresponding to the predicted label
@@ -279,6 +331,5 @@ def run_prediction(model, tsh: float, t3: float, tt4: float,
         }
     except Exception as e:
         # If model prediction errors out, fallback gracefully
-        import logging
-        logging.getLogger("xai-thyroid-ml").error(f"Model prediction error: {e}. Falling back to rule-based engine.", exc_info=True)
+        logger.error(f"Model prediction error: {e}. Falling back to rule-based engine.", exc_info=True)
         return generate_rule_based_prediction(tsh, t3, tt4, fti, age, sex)
