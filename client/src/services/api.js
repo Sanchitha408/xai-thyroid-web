@@ -13,6 +13,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  console.log('JWT token exists:', !!token);
+  console.log('Authorization header:', config.headers.Authorization);
+  
   return config;
 });
 
@@ -21,6 +25,8 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('xai_token');
+      alert('Your session has expired or is invalid. Please log in again.');
+      window.location.href = '/auth';
     }
     return Promise.reject(error);
   }

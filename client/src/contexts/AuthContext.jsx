@@ -42,8 +42,8 @@ export function AuthProvider({ children }) {
     const verify = async () => {
       if (state.token) {
         try {
-          const { data } = await getMe();
-          dispatch({ type: 'UPDATE_USER', payload: data.user });
+          const result = await getMe();
+          dispatch({ type: 'UPDATE_USER', payload: result.user });
         } catch {
           dispatch({ type: 'LOGOUT' });
         }

@@ -18,8 +18,8 @@ export default function Compare() {
         return;
       }
       try {
-        const { data } = await getHistory(1, 50);
-        setHistoryList(data?.records || []);
+        const result = await getHistory(1, 50);
+        setHistoryList(result?.records || []);
       } catch (err) {
         console.error('Failed to fetch history:', err);
       } finally {
@@ -105,8 +105,8 @@ export default function Compare() {
 
   const loadFullRecord = async (id, setRecord) => {
     try {
-      const { data } = await getRecord(id);
-      setRecord(data.record);
+      const result = await getRecord(id);
+      setRecord(result?.record);
     } catch (err) {
       console.error('Failed to load full record:', err);
     }
@@ -153,7 +153,7 @@ export default function Compare() {
                   <option value="" disabled>Select a record...</option>
                   {historyList.map(item => (
                     <option key={item.id} value={item.id}>
-                      {formatDate(item.createdAt)} — {item.prediction} ({Math.round(item.confidence * 100)}%)
+                      {formatDate(item.createdAt)} — {item.prediction} ({item.confidence > 1 ? Math.round(item.confidence) : Math.round(item.confidence * 100)}%)
                     </option>
                   ))}
                 </select>
@@ -165,7 +165,7 @@ export default function Compare() {
                   <option value="" disabled>Select a record...</option>
                   {historyList.map(item => (
                     <option key={item.id} value={item.id}>
-                      {formatDate(item.createdAt)} — {item.prediction} ({Math.round(item.confidence * 100)}%)
+                      {formatDate(item.createdAt)} — {item.prediction} ({item.confidence > 1 ? Math.round(item.confidence) : Math.round(item.confidence * 100)}%)
                     </option>
                   ))}
                 </select>
@@ -196,8 +196,8 @@ export default function Compare() {
                       </tr>
                       <tr className="border-b border-border/50 bg-bg-dark hover:bg-bg-card transition-colors">
                         <td className="py-4 px-6 font-medium text-muted">Confidence</td>
-                        <td className="py-4 px-6 text-secondary">{Math.round(recordA.confidence * 100)}%</td>
-                        <td className="py-4 px-6 text-secondary">{Math.round(recordB.confidence * 100)}%</td>
+                        <td className="py-4 px-6 text-secondary">{recordA.confidence > 1 ? Math.round(recordA.confidence) : Math.round(recordA.confidence * 100)}%</td>
+                        <td className="py-4 px-6 text-secondary">{recordB.confidence > 1 ? Math.round(recordB.confidence) : Math.round(recordB.confidence * 100)}%</td>
                       </tr>
                       <tr className="border-b border-border/50 bg-bg-glass hover:bg-bg-card transition-colors">
                         <td className="py-4 px-6 font-medium text-muted">TSH</td>

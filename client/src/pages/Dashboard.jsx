@@ -25,11 +25,10 @@ export default function Dashboard() {
   const fetchHistory = async () => {
     setLoading(true);
     try {
-      const { data } = await getHistory(page, 10);
-      // Expected: { success: true, records: [...], total: X, pages: Y, page: Z }
-      setHistory(data.records);
-      setTotalPages(data.pages);
-      setTotalRecords(data.total);
+      const result = await getHistory(page, 10);
+      setHistory(result.records || []);
+      setTotalPages(result.totalPages || 1);
+      setTotalRecords(result.total || 0);
     } catch (err) {
       console.error('Failed to load history:', err);
     } finally {
@@ -58,26 +57,29 @@ export default function Dashboard() {
   const handleViewDetails = async (record) => {
     setViewLoading(true);
     try {
-      const { data } = await getRecord(record.id);
-      // Expect record from DB:
+      const result = await getRecord(record.id);
+      const recordData = result.record;
+      if (!recordData) {
+        throw new Error('Record data is empty');
+      }
       setSelectedRecord({
-        id: data.record.id,
-        prediction: data.record.prediction,
-        confidence: data.record.confidence,
-        probabilities: data.record.probabilities,
-        shap_values: data.record.shap_values,
-        shap_narrative: data.record.shap_narrative,
+        id: recordData.id,
+        prediction: recordData.prediction,
+        confidence: recordData.confidence,
+        probabilities: recordData.probabilities,
+        shap_values: recordData.shap_values,
+        shap_narrative: recordData.shap_narrative,
         // Maintain compatibility with components expecting explanation/shap
-        explanation: data.record.explanation || data.record.shap_narrative,
-        shap: data.record.shap_values
+        explanation: recordData.explanation || recordData.shap_narrative,
+        shap: recordData.shap_values
       });
-      setSelectedPatientData(data.record.patient_data || {
-        tsh: data.record.tsh,
-        t3: data.record.t3,
-        tt4: data.record.tt4,
-        fti: data.record.fti,
-        age: data.record.age,
-        sex: data.record.sex
+      setSelectedPatientData(recordData.patient_data || {
+        tsh: recordData.tsh,
+        t3: recordData.t3,
+        tt4: recordData.tt4,
+        fti: recordData.fti,
+        age: recordData.age,
+        sex: recordData.sex
       });
       // Scroll to view details dynamically
       setTimeout(() => {
@@ -156,7 +158,7 @@ export default function Dashboard() {
                             </span>
                           </td>
                           <td className="py-4 font-orbitron text-xs font-semibold text-secondary">
-                            {Math.round(record.confidence * 100)}%
+                            {record.confidence > 1 ? Math.round(record.confidence) : Math.round(record.confidence * 100)}%
                           </td>
                           <td className="py-4 text-right flex items-center justify-end gap-2.5">
                             <button

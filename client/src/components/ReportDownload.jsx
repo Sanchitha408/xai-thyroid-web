@@ -84,7 +84,7 @@ export default function ReportDownload({ recordId = null, patientData = null, pr
 
       doc.setFontSize(12);
       let predColor = [16, 185, 129]; // Success (Green)
-      let outcome = predictionResult.prediction;
+      let outcome = predictionResult.prediction || 'Unknown';
       if (outcome.toLowerCase().includes('hypo')) predColor = [239, 68, 68]; // Danger (Red)
       if (outcome.toLowerCase().includes('hyper')) predColor = [245, 158, 11]; // Warning (Orange)
 
@@ -94,7 +94,11 @@ export default function ReportDownload({ recordId = null, patientData = null, pr
       doc.setTextColor(209, 213, 219);
       doc.setFontSize(11);
       doc.setFont('Helvetica', 'normal');
-      doc.text(`Model Confidence: ${Math.round(predictionResult.confidence * 100)}%`, 15, 100);
+      // Backend returns confidence as 0-100 (percentage) or 0-1 (fraction)
+      const confidenceVal = predictionResult.confidence > 1
+        ? Math.round(predictionResult.confidence)
+        : Math.round(predictionResult.confidence * 100);
+      doc.text(`Model Confidence: ${confidenceVal}%`, 15, 100);
 
       // SHAP & Explainability
       doc.setTextColor(255, 255, 255);
@@ -106,7 +110,7 @@ export default function ReportDownload({ recordId = null, patientData = null, pr
       doc.setFontSize(10);
       doc.setTextColor(209, 213, 219);
       const splitText = doc.splitTextToSize(
-        predictionResult.explanation || 'No explainable clinical narrative generated.',
+        predictionResult.explanation || predictionResult.shap_narrative || 'No explainable clinical narrative generated.',
         180
       );
       doc.text(splitText, 15, 120);

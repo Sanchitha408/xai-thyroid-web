@@ -96,7 +96,7 @@ export default function ResultPanel({ result = null, patientData = null, recordI
           <span className="font-orbitron text-[10px] text-muted tracking-widest uppercase mb-1">
             {t('result.confidence')}
           </span>
-          <ConfidenceRing value={Math.round(confidence * 100)} />
+          <ConfidenceRing value={confidence > 1 ? Math.round(confidence) : Math.round(confidence * 100)} />
         </div>
       </div>
 

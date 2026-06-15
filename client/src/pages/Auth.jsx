@@ -77,14 +77,17 @@ export default function Auth() {
           password,
           preferred_lang: preferredLang
         };
-        const { data } = await registerApi(payload);
-        // Save session credentials
-        saveAuth(data.token, data.user);
+        // registerApi returns response.data directly: { message, token, user }
+        const result = await registerApi(payload);
+        console.log('Register result:', result);
+        saveAuth(result.token, result.user);
         navigate('/diagnose');
       } else {
         const payload = { email, password };
-        const { data } = await loginApi(payload);
-        saveAuth(data.token, data.user);
+        // loginApi returns response.data directly: { token, user }
+        const result = await loginApi(payload);
+        console.log('Login result:', result);
+        saveAuth(result.token, result.user);
         navigate('/diagnose');
       }
     } catch (err) {
