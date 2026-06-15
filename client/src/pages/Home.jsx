@@ -681,7 +681,7 @@ export default function Home() {
               to="/diagnose" 
               className="relative overflow-hidden bg-xai-accent text-white font-poppins font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] active:scale-95 text-lg text-center w-full sm:w-auto"
             >
-              Launch Application
+              Diagnose now
             </Link>
             <Link 
               to="/about" 
