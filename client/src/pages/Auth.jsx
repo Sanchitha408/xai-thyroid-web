@@ -15,6 +15,21 @@ const LANGUAGES = [
   { code: 'es', label: 'Español (Spanish)' },
 ];
 
+const getAuthPayload = (response) => {
+  const token =
+    response?.token ||
+    response?.data?.token ||
+    response?.accessToken ||
+    response?.data?.accessToken;
+
+  const user =
+    response?.user ||
+    response?.data?.user ||
+    response?.data;
+
+  return { token, user };
+};
+
 export default function Auth() {
   const { t } = useTranslation();
   const { login: saveAuth } = useAuth();
@@ -77,18 +92,34 @@ export default function Auth() {
           password,
           preferred_lang: preferredLang
         };
-        // registerApi returns response.data directly: { message, token, user }
-        const result = await registerApi(payload);
-        console.log('Register result:', result);
-        saveAuth(result.token, result.user);
-        navigate('/diagnose');
+        const response = await registerApi(payload);
+        console.log('Register response:', response);
+
+        const { token, user } = getAuthPayload(response);
+
+        if (token) {
+          localStorage.setItem('xai_token', token);
+          saveAuth(token, user);
+          navigate('/diagnose');
+        } else {
+          console.error('No token in response:', response);
+          setError('Registration failed. Please try again.');
+        }
       } else {
         const payload = { email, password };
-        // loginApi returns response.data directly: { token, user }
-        const result = await loginApi(payload);
-        console.log('Login result:', result);
-        saveAuth(result.token, result.user);
-        navigate('/diagnose');
+        const response = await loginApi(payload);
+        console.log('Login response:', response);
+
+        const { token, user } = getAuthPayload(response);
+
+        if (token) {
+          localStorage.setItem('xai_token', token);
+          saveAuth(token, user);
+          navigate('/diagnose');
+        } else {
+          console.error('No token in response:', response);
+          setError('Login failed. Please try again.');
+        }
       }
     } catch (err) {
       console.error('Auth error:', err);

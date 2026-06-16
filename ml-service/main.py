@@ -5,6 +5,7 @@ Runs on port 8000.
 """
 
 from contextlib import asynccontextmanager
+from datetime import datetime
 from typing import Literal
 
 from fastapi import FastAPI, HTTPException, Request
@@ -96,6 +97,7 @@ async def health():
     return {
         "status": "ok",
         "model_loaded": ml_state.get("model") is not None,
+        "timestamp": datetime.utcnow().isoformat(),
     }
 
 

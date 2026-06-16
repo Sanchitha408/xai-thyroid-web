@@ -4,8 +4,17 @@ import { getMe } from '../services/authService';
 
 const AuthContext = createContext(null);
 
+const readStoredUser = () => {
+  try {
+    return JSON.parse(localStorage.getItem('xai_user') || 'null');
+  } catch {
+    localStorage.removeItem('xai_user');
+    return null;
+  }
+};
+
 const initialState = {
-  user: JSON.parse(localStorage.getItem('xai_user') || 'null'),
+  user: readStoredUser(),
   token: localStorage.getItem('xai_token') || null,
   loading: false,
   initialized: false,
@@ -15,14 +24,19 @@ function authReducer(state, action) {
   switch (action.type) {
     case 'LOGIN':
       localStorage.setItem('xai_token', action.payload.token);
-      localStorage.setItem('xai_user', JSON.stringify(action.payload.user));
-      return { ...state, user: action.payload.user, token: action.payload.token, loading: false };
+      if (action.payload.user) {
+        localStorage.setItem('xai_user', JSON.stringify(action.payload.user));
+      } else {
+        localStorage.removeItem('xai_user');
+      }
+      return { ...state, user: action.payload.user || null, token: action.payload.token, loading: false };
     case 'LOGOUT':
       localStorage.removeItem('xai_token');
       localStorage.removeItem('xai_user');
       return { ...state, user: null, token: null, loading: false };
     case 'UPDATE_USER':
-      const updated = { ...state.user, ...action.payload };
+      if (!action.payload) return state;
+      const updated = { ...(state.user || {}), ...action.payload };
       localStorage.setItem('xai_user', JSON.stringify(updated));
       return { ...state, user: updated };
     case 'SET_LOADING':
@@ -40,10 +54,13 @@ export function AuthProvider({ children }) {
   // Verify token on mount
   useEffect(() => {
     const verify = async () => {
-      if (state.token) {
+      const savedToken = localStorage.getItem('xai_token');
+
+      if (savedToken) {
         try {
           const result = await getMe();
-          dispatch({ type: 'UPDATE_USER', payload: result.user });
+          const user = result?.user || result?.data?.user || result?.data || result;
+          if (user) dispatch({ type: 'UPDATE_USER', payload: user });
         } catch {
           dispatch({ type: 'LOGOUT' });
         }

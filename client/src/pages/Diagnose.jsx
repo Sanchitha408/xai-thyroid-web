@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Loader2, Sparkles } from 'lucide-react';
 import DiagnosisForm from '../components/DiagnosisForm';
 import ResultPanel from '../components/ResultPanel';
@@ -8,6 +9,7 @@ import { predict } from '../services/diagnosisService';
 
 export default function Diagnose() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   
@@ -47,10 +49,22 @@ export default function Diagnose() {
         shap: result.shap_values
       });
       setRecordId(result.record_id);
-    } catch (err) {
-      console.error('Diagnosis failed:', err);
-      const errMsg = err.response?.data?.message || err.message || t('errors.generic');
-      setError(errMsg);
+    } catch (error) {
+      console.error('Diagnosis failed:', error);
+
+      if (error.response?.status === 503) {
+        setError(
+          'The AI service is waking up (this takes ~30 seconds on free hosting). Please wait and try again.'
+        );
+      } else if (error.response?.status === 401) {
+        setError('Please log in to use the diagnosis feature.');
+        navigate('/auth');
+      } else {
+        setError(
+          error.response?.data?.message ||
+          'Diagnosis failed. Please try again.'
+        );
+      }
     } finally {
       setLoading(false);
     }

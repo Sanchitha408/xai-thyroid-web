@@ -3,6 +3,7 @@ require('dotenv').config();
 const app = require('./app');
 const { sequelize } = require('./models');
 const logger = require('./utils/logger');
+const https = require('https');
 
 const PORT = process.env.PORT || 5000;
 
@@ -38,18 +39,33 @@ process.on('unhandledRejection', (reason) => {
 
 startServer();
 
-// Keep-alive ping to prevent Render free tier sleep
+const trimTrailingSlash = (url) => url.replace(/\/+$/, '');
+
+const pingUrl = (url, label) => {
+  https.get(url, (res) => {
+    logger.info(`${label} keep-alive ping sent`, { status: res.statusCode });
+    res.resume();
+  }).on('error', (err) => {
+    logger.warn(`${label} keep-alive ping failed`, { error: err.message });
+  });
+};
+
+// Keep-alive pings to reduce Render free tier sleep
 if (process.env.NODE_ENV === 'production') {
+  const backendBaseUrl = trimTrailingSlash(
+    process.env.RENDER_EXTERNAL_URL ||
+    'https://xai-thyroid-backend.onrender.com'
+  );
+  const mlServiceUrl = trimTrailingSlash(
+    process.env.ML_SERVICE_URL ||
+    'https://xai-thyroid-ml.onrender.com'
+  );
+
   setInterval(() => {
-    const https = require('https');
-    https.get(
-      process.env.RENDER_EXTERNAL_URL || 
-      'https://xai-thyroid-backend.onrender.com/api/v1/health',
-      (res) => {
-        console.log('Keep-alive ping sent, status:', res.statusCode);
-      }
-    ).on('error', (err) => {
-      console.log('Keep-alive ping failed:', err.message);
-    });
+    pingUrl(`${backendBaseUrl}/api/v1/health`, 'Backend');
+  }, 14 * 60 * 1000);
+
+  setInterval(() => {
+    pingUrl(`${mlServiceUrl}/health`, 'ML service');
   }, 14 * 60 * 1000);
 }
