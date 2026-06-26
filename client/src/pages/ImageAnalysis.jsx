@@ -87,49 +87,64 @@ export default function ImageAnalysis() {
   // ── API CALL ─────────────────────────────────────────────
   const analyzeImage = async () => {
     if (!image) return;
-    
+
     setIsAnalyzing(true);
     setError(null);
     setResults(null);
 
     try {
       const token = localStorage.getItem('xai_token');
-      
+
       if (!token) {
         setError('Please log in to use this feature.');
+        setIsAnalyzing(false);
         return;
       }
+
+      // Log token for debugging
+      console.log('Token being sent:', token.substring(0, 20) + '...');
 
       const formData = new FormData();
       formData.append('image', image);
       formData.append('method', method);
       formData.append('stage', stage);
-      formData.append('threshold', threshold.toString());
+      formData.append('threshold', String(threshold));
 
-      const response = await fetch(
-        'http://localhost:5000/api/v1/image/analyze',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            // DO NOT set Content-Type here — 
-            // browser sets it automatically with boundary
-            // for multipart/form-data
-          },
-          body: formData,
-        }
-      );
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          errorData.message || 
-          `Server error: ${response.status}`
+      // Use XMLHttpRequest instead of fetch for better
+      // FormData + Authorization header support
+      const result = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open(
+          'POST',
+          'http://localhost:5000/api/v1/image/analyze'
         );
-      }
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        
+        xhr.onload = () => {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            if (xhr.status >= 200 && xhr.status < 300) {
+              resolve(data);
+            } else {
+              reject(new Error(data.message || 
+                `Error ${xhr.status}`));
+            }
+          } catch (e) {
+            reject(new Error('Invalid response from server'));
+          }
+        };
 
-      const data = await response.json();
-      setResults(data);
+        xhr.onerror = () => reject(
+          new Error('Network error. Is the server running?')
+        );
+        xhr.ontimeout = () => reject(
+          new Error('Request timed out.')
+        );
+        xhr.timeout = 60000;
+        xhr.send(formData);
+      });
+
+      setResults(result);
 
     } catch (err) {
       console.error('Analysis error:', err);
