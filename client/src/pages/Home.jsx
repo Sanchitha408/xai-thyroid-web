@@ -613,7 +613,7 @@ export default function Home() {
             </p>
             <div className="flex flex-wrap gap-4 mt-2">
               <Link 
-                to="/ultrasound" 
+                to="/image-analysis" 
                 className="relative overflow-hidden bg-xai-accent text-white font-poppins font-semibold px-8 py-3.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] active:scale-95 text-center"
               >
                 Analyze Ultrasound Scan

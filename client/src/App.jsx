@@ -73,7 +73,7 @@ export default function App() {
                   }
                 />
                 <Route
-                  path="/ultrasound"
+                  path="/image-analysis"
                   element={
                     <ProtectedRoute>
                       <RouteWrapper>

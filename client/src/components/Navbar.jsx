@@ -170,10 +170,11 @@ export default function Navbar() {
 
                     {/* Menu items */}
                     {[
-                      { label: `📊 ${t('nav.dashboard')}`, href: '/dashboard' },
-                      { label: `📋 ${t('nav.compare')}`, href: '/compare' },
-                      { label: `🩺 ${t('nav.diagnose')}`, href: '/diagnose' },
-                      { label: `🔬 ${t('nav.ultrasound') || 'Ultrasound'}`, href: '/ultrasound' },
+                      { label: '🩺 Diagnose', href: '/diagnose' },
+                      { label: '🔬 Ultrasound Analysis', href: '/image-analysis' },
+                      { label: '📊 Compare Diagnoses', href: '/compare' },
+                      { label: '📋 My Dashboard', href: '/dashboard' },
+                      { label: '👤 About', href: '/about' },
                     ].map((item) => (
                       <Link
                         key={item.href}

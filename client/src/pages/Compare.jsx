@@ -1,25 +1,57 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import useAuth from '../hooks/useAuth';
-import { getHistory, getRecord } from '../services/diagnosisService';
-import { Loader2 } from 'lucide-react';
+import { Loader2, GitCompare } from 'lucide-react';
+import api from '../services/api';
+import { 
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+  Tooltip, Legend, ResponsiveContainer 
+} from 'recharts';
+
+const PredictionBadge = ({ value }) => {
+  const colors = {
+    Normal: 'bg-[rgba(16,185,129,0.15)] text-[#10B981] border-[#10B981]',
+    Hypothyroid: 'bg-[rgba(239,68,68,0.15)] text-[#EF4444] border-[#EF4444]',
+    Hyperthyroid: 'bg-[rgba(245,158,11,0.15)] text-[#F59E0B] border-[#F59E0B]',
+  };
+  return (
+    <span className={`
+      inline-block px-3 py-1 rounded-full text-xs 
+      font-poppins font-semibold border
+      ${colors[value] || colors.Normal}
+    `}>
+      {value}
+    </span>
+  );
+};
+
+const ChangeIndicator = ({ older, newer }) => {
+  if (!older || !newer || older === newer) return null;
+  const improved = newer < older; // lower TSH/T3 = better for hypo
+  return (
+    <span className={`
+      ml-2 text-xs font-poppins
+      ${improved ? 'text-[#10B981]' : 'text-[#EF4444]'}
+    `}>
+      {improved ? '↓' : '↑'} 
+      {Math.abs(((newer - older) / older) * 100).toFixed(1)}%
+    </span>
+  );
+};
 
 export default function Compare() {
-  const { user } = useAuth();
-  const [historyList, setHistoryList] = useState([]);
-  const [recordA, setRecordA] = useState(null);
-  const [recordB, setRecordB] = useState(null);
+  const [history, setHistory] = useState([]);
+  const [selectedA, setSelectedA] = useState('');
+  const [selectedB, setSelectedB] = useState('');
+  const [comparing, setComparing] = useState(false);
+  const [compResult, setCompResult] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // On mount: fetch diagnosis history
   useEffect(() => {
     const fetchHistory = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
       try {
-        const result = await getHistory(1, 50);
-        setHistoryList(result?.records || []);
+        const res = await api.get('/diagnosis/history?page=1&limit=50');
+        setHistory(res.data?.records || res.data?.data || []);
       } catch (err) {
         console.error('Failed to fetch history:', err);
       } finally {
@@ -27,224 +59,437 @@ export default function Compare() {
       }
     };
     fetchHistory();
-  }, [user]);
+  }, []);
 
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-bg-dark text-secondary pt-32 pb-16 px-6 font-poppins flex flex-col items-center justify-center text-center">
-        <h1 className="font-orbitron font-bold text-3xl mb-4 text-white">📊 Comparison Mode</h1>
-        <p className="text-muted mb-8 max-w-md">Please log in to access comparison mode.</p>
-        <Link to="/auth" className="btn-primary">
-          Login
-        </Link>
-      </div>
-    );
-  }
+  const recordA = history.find(r => r.id === parseInt(selectedA, 10));
+  const recordB = history.find(r => r.id === parseInt(selectedB, 10));
 
-  // Format date helper
-  const formatDate = (dateString) => {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-GB'); // DD/MM/YYYY
-  };
-
-  const renderBadge = (prediction) => {
-    if (!prediction) return null;
-    const lower = prediction.toLowerCase();
-    if (lower.includes('normal')) return <span className="text-success bg-success/10 border border-success/30 px-2 py-1 rounded text-xs font-bold uppercase">{prediction}</span>;
-    if (lower.includes('hypo')) return <span className="text-danger bg-danger/10 border border-danger/30 px-2 py-1 rounded text-xs font-bold uppercase">{prediction}</span>;
-    if (lower.includes('hyper')) return <span className="text-warning bg-warning/10 border border-warning/30 px-2 py-1 rounded text-xs font-bold uppercase">{prediction}</span>;
-    return <span className="px-2 py-1 rounded text-xs font-bold uppercase bg-bg-glass text-muted">{prediction}</span>;
-  };
-
-  const renderValue = (valA, valB, isValA = true) => {
-    if (valA === undefined || valB === undefined) return isValA ? valA : valB;
-    const numA = parseFloat(valA);
-    const numB = parseFloat(valB);
-    if (isNaN(numA) || isNaN(numB)) return isValA ? valA : valB;
+  const handleCompare = () => {
+    setComparing(true);
     
-    // Check if diff > 20%
-    const diff = Math.abs(numA - numB);
-    const max = Math.max(Math.abs(numA), Math.abs(numB));
-    const isSignificant = max > 0 && (diff / max) > 0.20;
-    
-    const displayVal = isValA ? valA : valB;
-    if (isSignificant) {
-      return (
-        <span className="text-warning font-semibold flex items-center gap-1">
-          {displayVal} ⚠️
-        </span>
-      );
-    }
-    return displayVal;
-  };
-
-  const getTrend = () => {
-    if (!recordA || !recordB) return null;
-    if (recordA.prediction === recordB.prediction) {
-      return { trend: 'same', message: 'Your thyroid levels are stable. Continue monitoring regularly.', icon: '→', color: 'text-muted' };
+    if (!recordA || !recordB) {
+      setComparing(false);
+      return;
     }
     
-    const dateA = new Date(recordA.createdAt).getTime();
-    const dateB = new Date(recordB.createdAt).getTime();
+    // Sort by date so A is always older
+    const [older, newer] = 
+      new Date(recordA.created_at) < new Date(recordB.created_at)
+        ? [recordA, recordB]
+        : [recordB, recordA];
     
-    const newest = dateA >= dateB ? recordA : recordB;
-    const oldest = dateA >= dateB ? recordB : recordA;
-    
-    const newestLower = newest.prediction?.toLowerCase() || '';
-    const oldestLower = oldest.prediction?.toLowerCase() || '';
-    
-    if (newestLower.includes('normal') && !oldestLower.includes('normal')) {
-      return { trend: 'improving', message: 'Great progress! Your thyroid health is showing improvement. Keep following your treatment plan.', icon: '↑', color: 'text-success' };
-    } else if (!newestLower.includes('normal') && oldestLower.includes('normal')) {
-      return { trend: 'worsening', message: 'Your values show some concern. Please consult your doctor soon.', icon: '↓', color: 'text-danger' };
-    } else {
-      return { trend: 'same', message: 'Your values remain abnormal. Keep following your treatment plan.', icon: '→', color: 'text-warning' };
-    }
+    setCompResult({ older, newer });
+    setComparing(false);
   };
-
-  const loadFullRecord = async (id, setRecord) => {
-    try {
-      const result = await getRecord(id);
-      setRecord(result?.record);
-    } catch (err) {
-      console.error('Failed to load full record:', err);
-    }
-  };
-
-  const handleSelectA = (e) => {
-    const id = parseInt(e.target.value);
-    loadFullRecord(id, setRecordA);
-  };
-
-  const handleSelectB = (e) => {
-    const id = parseInt(e.target.value);
-    loadFullRecord(id, setRecordB);
-  };
-
-  const trendData = getTrend();
 
   return (
     <div className="min-h-screen bg-bg-dark text-secondary pt-32 pb-16 px-6 font-poppins">
-      <div className="max-w-7xl mx-auto flex flex-col gap-10">
+      <div className="max-w-4xl mx-auto flex flex-col gap-8">
+        
         {/* Header */}
-        <div className="flex flex-col gap-2 max-w-2xl">
-          <h1 className="font-orbitron font-extrabold text-3xl md:text-4xl text-white tracking-wide">
-            📊 Comparison Mode
+        <div className="flex flex-col gap-2">
+          <h1 className="font-orbitron font-bold text-3xl md:text-4xl text-white tracking-wide">
+            📊 Compare Diagnoses
           </h1>
           <p className="text-sm text-muted leading-relaxed">
-            Compare two diagnoses to track your thyroid health
+            Select two diagnosis records to compare your thyroid health over time
           </p>
         </div>
 
         {loading ? (
-           <div className="flex justify-center py-20"><Loader2 className="animate-spin text-primary" size={32}/></div>
-        ) : historyList.length < 2 ? (
-          <div className="glass-card p-8 text-center text-muted">
-            You need at least two diagnosis records to use comparison mode.
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="animate-spin text-primary" size={36} />
+          </div>
+        ) : history.length < 2 ? (
+          <div className="glass-card p-10 text-center text-muted border border-white/5 rounded-2xl bg-[rgba(255,255,255,0.02)]">
+            <p className="mb-4">You need at least two diagnosis records to use comparison mode.</p>
+            <Link 
+              to="/diagnose" 
+              className="inline-block px-6 py-2.5 bg-primary text-white font-orbitron font-semibold rounded-full hover:bg-blue-600 transition-all duration-300"
+            >
+              Start Diagnose
+            </Link>
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {/* Panel A */}
+            {/* Selection panels */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              
+              {/* Diagnosis A Card */}
               <div className="flex flex-col gap-4">
-                <label className="form-label text-white">Select Diagnosis A</label>
-                <select className="form-input bg-bg-card border-border text-secondary p-3 rounded-lg focus:border-primary transition-colors outline-none" onChange={handleSelectA} defaultValue="">
-                  <option value="" disabled>Select a record...</option>
-                  {historyList.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {formatDate(item.createdAt)} — {item.prediction} ({item.confidence > 1 ? Math.round(item.confidence) : Math.round(item.confidence * 100)}%)
+                <h3 className="font-orbitron font-semibold text-lg text-white">Diagnosis A</h3>
+                <select
+                  value={selectedA}
+                  onChange={(e) => setSelectedA(e.target.value)}
+                  className="w-full bg-[#1a2235] border border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#3B82F6] transition-all duration-300 cursor-pointer"
+                >
+                  <option value="">Select a diagnosis</option>
+                  {history.map((record) => (
+                    <option key={record.id} value={record.id}>
+                      {new Date(record.created_at).toLocaleDateString('en-GB')} — {record.prediction} ({record.confidence}%)
                     </option>
                   ))}
                 </select>
-              </div>
-              {/* Panel B */}
-              <div className="flex flex-col gap-4">
-                <label className="form-label text-white">Select Diagnosis B</label>
-                <select className="form-input bg-bg-card border-border text-secondary p-3 rounded-lg focus:border-primary transition-colors outline-none" onChange={handleSelectB} defaultValue="">
-                  <option value="" disabled>Select a record...</option>
-                  {historyList.map(item => (
-                    <option key={item.id} value={item.id}>
-                      {formatDate(item.createdAt)} — {item.prediction} ({item.confidence > 1 ? Math.round(item.confidence) : Math.round(item.confidence * 100)}%)
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
 
-            {recordA && recordB && (
-              <div className="glass-card overflow-hidden mt-6 shadow-card border border-border rounded-xl backdrop-blur-glass transition-all">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[600px]">
-                    <thead>
-                      <tr className="bg-bg-card border-b border-border font-orbitron text-sm">
-                        <th className="py-4 px-6 text-muted font-semibold tracking-wider">Feature</th>
-                        <th className="py-4 px-6 text-white font-semibold tracking-wider">Diagnosis A</th>
-                        <th className="py-4 px-6 text-white font-semibold tracking-wider">Diagnosis B</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm">
-                      <tr className="border-b border-border/50 bg-bg-dark hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">Date</td>
-                        <td className="py-4 px-6 text-secondary">{formatDate(recordA.createdAt)}</td>
-                        <td className="py-4 px-6 text-secondary">{formatDate(recordB.createdAt)}</td>
-                      </tr>
-                      <tr className="border-b border-border/50 bg-bg-glass hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">Prediction</td>
-                        <td className="py-4 px-6">{renderBadge(recordA.prediction)}</td>
-                        <td className="py-4 px-6">{renderBadge(recordB.prediction)}</td>
-                      </tr>
-                      <tr className="border-b border-border/50 bg-bg-dark hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">Confidence</td>
-                        <td className="py-4 px-6 text-secondary">{recordA.confidence > 1 ? Math.round(recordA.confidence) : Math.round(recordA.confidence * 100)}%</td>
-                        <td className="py-4 px-6 text-secondary">{recordB.confidence > 1 ? Math.round(recordB.confidence) : Math.round(recordB.confidence * 100)}%</td>
-                      </tr>
-                      <tr className="border-b border-border/50 bg-bg-glass hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">TSH</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.TSH, recordB.patient_data?.TSH, true)}</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.TSH, recordB.patient_data?.TSH, false)}</td>
-                      </tr>
-                      <tr className="border-b border-border/50 bg-bg-dark hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">T3</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.T3, recordB.patient_data?.T3, true)}</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.T3, recordB.patient_data?.T3, false)}</td>
-                      </tr>
-                      <tr className="border-b border-border/50 bg-bg-glass hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">TT4</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.TT4, recordB.patient_data?.TT4, true)}</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.TT4, recordB.patient_data?.TT4, false)}</td>
-                      </tr>
-                      <tr className="border-b border-border/50 bg-bg-dark hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">FTI</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.FTI, recordB.patient_data?.FTI, true)}</td>
-                        <td className="py-4 px-6">{renderValue(recordA.patient_data?.FTI, recordB.patient_data?.FTI, false)}</td>
-                      </tr>
-                      <tr className="bg-bg-glass hover:bg-bg-card transition-colors">
-                        <td className="py-4 px-6 font-medium text-muted">Age</td>
-                        <td className="py-4 px-6 text-secondary">{recordA.patient_data?.age}</td>
-                        <td className="py-4 px-6 text-secondary">{recordB.patient_data?.age}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                {trendData && (
-                  <div className="p-6 border-t border-border bg-bg-card flex flex-col gap-2 rounded-b-xl">
-                    <h3 className="font-orbitron font-semibold text-white tracking-wide">Health Trend</h3>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className={`text-2xl font-bold ${trendData.color}`}>
-                        {trendData.icon}
+                {/* Preview for Diagnosis A */}
+                {recordA && (
+                  <div className="glass-card p-5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] rounded-xl flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted">
+                        {new Date(recordA.created_at).toLocaleDateString('en-GB')}
                       </span>
-                      <p className="text-sm text-secondary font-medium tracking-wide">
-                        {trendData.message}
-                      </p>
+                      <PredictionBadge value={recordA.prediction} />
+                    </div>
+                    <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                      <span className="text-sm text-muted">Confidence:</span>
+                      <span className="text-sm font-semibold text-white">{recordA.confidence}%</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">TSH (mIU/L)</span>
+                        <span className="font-semibold text-white">{recordA.tsh}</span>
+                      </div>
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">T3 (nmol/L)</span>
+                        <span className="font-semibold text-white">{recordA.t3}</span>
+                      </div>
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">TT4 (nmol/L)</span>
+                        <span className="font-semibold text-white">{recordA.tt4}</span>
+                      </div>
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">FTI</span>
+                        <span className="font-semibold text-white">{recordA.fti}</span>
+                      </div>
                     </div>
                   </div>
                 )}
               </div>
+
+              {/* Diagnosis B Card */}
+              <div className="flex flex-col gap-4">
+                <h3 className="font-orbitron font-semibold text-lg text-white">Diagnosis B</h3>
+                <select
+                  value={selectedB}
+                  onChange={(e) => setSelectedB(e.target.value)}
+                  className="w-full bg-[#1a2235] border border-[rgba(255,255,255,0.08)] rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-[#3B82F6] transition-all duration-300 cursor-pointer"
+                >
+                  <option value="">Select a diagnosis</option>
+                  {history.map((record) => (
+                    <option key={record.id} value={record.id}>
+                      {new Date(record.created_at).toLocaleDateString('en-GB')} — {record.prediction} ({record.confidence}%)
+                    </option>
+                  ))}
+                </select>
+
+                {/* Preview for Diagnosis B */}
+                {recordB && (
+                  <div className="glass-card p-5 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.08)] rounded-xl flex flex-col gap-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-muted">
+                        {new Date(recordB.created_at).toLocaleDateString('en-GB')}
+                      </span>
+                      <PredictionBadge value={recordB.prediction} />
+                    </div>
+                    <div className="flex justify-between items-center border-b border-white/5 pb-2">
+                      <span className="text-sm text-muted">Confidence:</span>
+                      <span className="text-sm font-semibold text-white">{recordB.confidence}%</span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">TSH (mIU/L)</span>
+                        <span className="font-semibold text-white">{recordB.tsh}</span>
+                      </div>
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">T3 (nmol/L)</span>
+                        <span className="font-semibold text-white">{recordB.t3}</span>
+                      </div>
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">TT4 (nmol/L)</span>
+                        <span className="font-semibold text-white">{recordB.tt4}</span>
+                      </div>
+                      <div className="bg-black/20 p-2.5 rounded-lg border border-white/5 flex flex-col">
+                        <span className="text-muted mb-0.5">FTI</span>
+                        <span className="font-semibold text-white">{recordB.fti}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Compare Button */}
+            <div className="flex justify-center my-8">
+              {selectedA && selectedB && selectedA !== selectedB && (
+                <button
+                  onClick={handleCompare}
+                  disabled={!selectedA || !selectedB || selectedA === selectedB || comparing}
+                  className="
+                    w-full max-w-xs mx-auto
+                    flex items-center justify-center gap-2
+                    px-8 py-4
+                    rounded-xl
+                    bg-[#3B82F6]
+                    text-white
+                    font-orbitron font-bold
+                    text-base
+                    hover:bg-[#2563EB]
+                    hover:scale-105
+                    hover:shadow-[0_0_30px_rgba(59,130,246,0.4)]
+                    transition-all duration-300
+                    disabled:opacity-40
+                    disabled:cursor-not-allowed
+                    disabled:hover:scale-100
+                  "
+                >
+                  {comparing ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Comparing...
+                    </>
+                  ) : (
+                    <>
+                      <GitCompare size={18} />
+                      Compare Now
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            {/* Results Display */}
+            {compResult && (
+              <div className="flex flex-col gap-8 mt-4">
+                
+                {/* 1. Comparison Table */}
+                <div className="overflow-x-auto bg-[#070b19] border border-[rgba(255,255,255,0.06)] rounded-xl">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="bg-[#111827]">
+                        <th className="font-orbitron text-left px-6 py-4 text-white text-sm rounded-tl-xl">
+                          Feature
+                        </th>
+                        <th className="font-orbitron text-center px-6 py-4 text-[#94A3B8] text-sm">
+                          Earlier ({new Date(compResult.older.created_at).toLocaleDateString('en-GB')})
+                        </th>
+                        <th className="font-orbitron text-center px-6 py-4 text-white text-sm rounded-tr-xl">
+                          Latest ({new Date(compResult.newer.created_at).toLocaleDateString('en-GB')})
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        { 
+                          label: 'Prediction', 
+                          older: compResult.older.prediction, 
+                          newer: compResult.newer.prediction,
+                          type: 'badge'
+                        },
+                        { 
+                          label: 'Confidence', 
+                          older: compResult.older.confidence + '%', 
+                          newer: compResult.newer.confidence + '%',
+                          type: 'text'
+                        },
+                        { 
+                          label: 'TSH', 
+                          older: compResult.older.tsh, 
+                          newer: compResult.newer.tsh,
+                          type: 'number'
+                        },
+                        { 
+                          label: 'T3', 
+                          older: compResult.older.t3, 
+                          newer: compResult.newer.t3,
+                          type: 'number'
+                        },
+                        { 
+                          label: 'TT4', 
+                          older: compResult.older.tt4, 
+                          newer: compResult.newer.tt4,
+                          type: 'number'
+                        },
+                        { 
+                          label: 'FTI', 
+                          older: compResult.older.fti, 
+                          newer: compResult.newer.fti,
+                          type: 'number'
+                        },
+                        { 
+                          label: 'Age', 
+                          older: compResult.older.age, 
+                          newer: compResult.newer.age,
+                          type: 'number'
+                        },
+                      ].map((row, i) => (
+                        <tr 
+                          key={i} 
+                          className={i % 2 === 0 ? 'bg-[#0A0F1E]' : 'bg-[#0D1526]'}
+                        >
+                          <td className="font-poppins font-medium text-[#94A3B8] px-6 py-4 text-sm">
+                            {row.label}
+                          </td>
+                          <td className="text-center px-6 py-4">
+                            {row.type === 'badge' 
+                              ? <PredictionBadge value={row.older} />
+                              : <span className="font-poppins text-[#94A3B8] text-sm">{row.older}</span>
+                            }
+                          </td>
+                          <td className="text-center px-6 py-4">
+                            {row.type === 'badge'
+                              ? <PredictionBadge value={row.newer} />
+                              : <span className="font-poppins text-white font-medium text-sm flex items-center justify-center gap-1">
+                                  {row.newer}
+                                  {row.type === 'number' && (
+                                    <ChangeIndicator 
+                                      older={parseFloat(row.older)} 
+                                      newer={parseFloat(row.newer)} 
+                                    />
+                                  )}
+                                </span>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* 2. Recharts Graph */}
+                <div className="bg-[rgba(255,255,255,0.04)] border border-[rgba(255,255,255,0.08)] rounded-2xl p-8">
+                  <h3 className="font-orbitron text-white text-xl font-bold mb-6">
+                    Blood Value Comparison Chart
+                  </h3>
+                  <ResponsiveContainer width="100%" height={350}>
+                    <BarChart 
+                      data={[
+                        { 
+                          name: 'TSH', 
+                          Earlier: parseFloat(compResult.older.tsh), 
+                          Latest: parseFloat(compResult.newer.tsh),
+                          normal: 4.0
+                        },
+                        { 
+                          name: 'T3', 
+                          Earlier: parseFloat(compResult.older.t3), 
+                          Latest: parseFloat(compResult.newer.t3),
+                          normal: 2.0
+                        },
+                        { 
+                          name: 'TT4', 
+                          Earlier: parseFloat(compResult.older.tt4), 
+                          Latest: parseFloat(compResult.newer.tt4),
+                          normal: 140
+                        },
+                        { 
+                          name: 'FTI', 
+                          Earlier: parseFloat(compResult.older.fti), 
+                          Latest: parseFloat(compResult.newer.fti),
+                          normal: 155
+                        },
+                      ]} 
+                      margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+                      <XAxis 
+                        dataKey="name" 
+                        tick={{ fill: '#94A3B8', fontFamily: 'Poppins' }}
+                        axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                      />
+                      <YAxis 
+                        tick={{ fill: '#94A3B8', fontFamily: 'Poppins' }}
+                        axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#111827',
+                          border: '1px solid rgba(255,255,255,0.08)',
+                          borderRadius: '12px',
+                          fontFamily: 'Poppins',
+                          color: 'white'
+                        }}
+                      />
+                      <Legend wrapperStyle={{ fontFamily: 'Poppins', color: '#94A3B8' }} />
+                      <Bar dataKey="Earlier" fill="rgba(148,163,184,0.6)" radius={[4,4,0,0]} />
+                      <Bar dataKey="Latest" fill="#3B82F6" radius={[4,4,0,0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                  <p className="font-poppins text-[#94A3B8] text-xs text-center mt-4">
+                    Blue bars = Latest diagnosis. Gray bars = Earlier diagnosis.
+                  </p>
+                </div>
+
+                {/* 3. Health Trend Message */}
+                {(() => {
+                  const olderPred = compResult.older.prediction;
+                  const newPred = compResult.newer.prediction;
+                  
+                  const getTrend = () => {
+                    if (olderPred === newPred) return 'stable';
+                    if (newPred === 'Normal') return 'improving';
+                    if (olderPred === 'Normal') return 'worsening';
+                    return 'changing';
+                  };
+                  
+                  const trend = getTrend();
+                  
+                  const trendConfig = {
+                    improving: {
+                      icon: '🎉',
+                      color: 'text-[#10B981]',
+                      bg: 'bg-[rgba(16,185,129,0.1)] border-[#10B981]',
+                      title: 'Great Progress!',
+                      message: 'Your thyroid health is showing improvement. Your latest results indicate Normal function. Keep following your treatment plan.'
+                    },
+                    worsening: {
+                      icon: '⚠️',
+                      color: 'text-[#EF4444]',
+                      bg: 'bg-[rgba(239,68,68,0.1)] border-[#EF4444]',
+                      title: 'Attention Needed',
+                      message: 'Your latest results show a change from Normal. Please consult your doctor soon for a proper evaluation.'
+                    },
+                    stable: {
+                      icon: '📊',
+                      color: 'text-[#3B82F6]',
+                      bg: 'bg-[rgba(59,130,246,0.1)] border-[#3B82F6]',
+                      title: 'Stable Condition',
+                      message: 'Your thyroid levels are consistent between the two diagnoses. Continue monitoring regularly and follow your doctor\'s advice.'
+                    },
+                    changing: {
+                      icon: '🔄',
+                      color: 'text-[#F59E0B]',
+                      bg: 'bg-[rgba(245,158,11,0.1)] border-[#F59E0B]',
+                      title: 'Condition Changed',
+                      message: 'Your thyroid condition has changed between these two diagnoses. Please discuss these results with your healthcare provider.'
+                    }
+                  };
+                  
+                  const config = trendConfig[trend];
+                  
+                  return (
+                    <div className={`mt-6 p-6 rounded-2xl border ${config.bg}`}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <span className="text-2xl">{config.icon}</span>
+                        <h4 className={`font-orbitron font-bold text-lg ${config.color}`}>
+                          {config.title}
+                        </h4>
+                      </div>
+                      <p className="font-poppins text-[#94A3B8] text-sm leading-relaxed">
+                        {config.message}
+                      </p>
+                      <p className="font-poppins text-xs text-[#64748B] mt-3">
+                        ⚠ This analysis is AI-generated. Always consult a qualified doctor.
+                      </p>
+                    </div>
+                  );
+                })()}
+
+              </div>
             )}
           </>
         )}
+
       </div>
     </div>
   );
