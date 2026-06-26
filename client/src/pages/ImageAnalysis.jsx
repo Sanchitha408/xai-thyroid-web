@@ -116,7 +116,7 @@ export default function ImageAnalysis() {
         const xhr = new XMLHttpRequest();
         xhr.open(
           'POST',
-          'http://localhost:5000/api/v1/image/analyze'
+          'https://xai-thyroid-backend.onrender.com/api/v1/image/analyze'
         );
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         
