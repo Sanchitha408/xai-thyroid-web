@@ -23,14 +23,14 @@ export default function Footer() {
               </span>
             </div>
             <p className="font-poppins text-[#94A3B8] text-sm mb-6">
-              Predict. Explain. Trust.
+              {t('footer.tagline')}
             </p>
           </div>
 
           {/* Contact Us */}
           <div className="flex flex-col items-center md:items-center gap-2 text-center">
             <p className="font-poppins font-normal text-xs text-muted uppercase tracking-wide">
-              Contact Us
+              {t('footer.contact')}
             </p>
             <a
               href="mailto:xaithyroid@gmail.com"

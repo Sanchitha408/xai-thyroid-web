@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import ParticleSphere from '../components/ParticleSphere';
@@ -61,6 +62,8 @@ function ParticleField() {
 }
 
 export default function Home() {
+  const { t } = useTranslation();
+
   // Register GSAP plugins inside the component before any useEffect
   gsap.registerPlugin(ScrollTrigger);
 
@@ -77,60 +80,60 @@ export default function Home() {
 
   const presets = [
     {
-      name: 'Patient A: Sarah, 34',
+      name: t('demo.preset_healthy'),
       data: [
-        { name: 'TSH', val: '2.4 mIU/L' },
-        { name: 'T3', val: '1.8 ng/dL' },
-        { name: 'T4', val: '7.2 μg/dL' },
-        { name: 'Age', val: '34' },
-        { name: 'Gender', val: 'Female' }
+        { name: t('diagnose.tsh'), val: '2.4 mIU/L' },
+        { name: t('diagnose.t3'), val: '1.8 ng/dL' },
+        { name: t('diagnose.tt4'), val: '7.2 μg/dL' },
+        { name: t('diagnose.age'), val: '34' },
+        { name: t('diagnose.sex'), val: t('diagnose.female') }
       ],
-      prediction: 'NORMAL',
+      prediction: t('predictions.Normal'),
       confidence: '94.2%',
       statusColor: 'text-xai-success',
       bulletColor: 'bg-xai-success',
       importance: [
-        { label: 'TSH Level', value: 85, color: 'bg-xai-accent' },
-        { label: 'T4 Concentration', value: 62, color: 'bg-xai-accent' },
-        { label: 'Age Factor', value: 34, color: 'bg-xai-muted' }
+        { label: t('diagnose.tsh_label'), value: 85, color: 'bg-xai-accent' },
+        { label: t('diagnose.tt4_label'), value: 62, color: 'bg-xai-accent' },
+        { label: t('diagnose.age_label'), value: 34, color: 'bg-xai-muted' }
       ]
     },
     {
-      name: 'Patient B: Michael, 52',
+      name: t('demo.preset_hypo'),
       data: [
-        { name: 'TSH', val: '12.8 mIU/L' },
-        { name: 'T3', val: '0.9 ng/dL' },
-        { name: 'T4', val: '4.1 μg/dL' },
-        { name: 'Age', val: '52' },
-        { name: 'Gender', val: 'Male' }
+        { name: t('diagnose.tsh'), val: '12.8 mIU/L' },
+        { name: t('diagnose.t3'), val: '0.9 ng/dL' },
+        { name: t('diagnose.tt4'), val: '4.1 μg/dL' },
+        { name: t('diagnose.age'), val: '52' },
+        { name: t('diagnose.sex'), val: t('diagnose.male') }
       ],
-      prediction: 'HYPOTHYROID',
+      prediction: t('predictions.Hypothyroid'),
       confidence: '89.5%',
       statusColor: 'text-xai-warning',
       bulletColor: 'bg-xai-warning',
       importance: [
-        { label: 'TSH Level', value: 95, color: 'bg-xai-accent' },
-        { label: 'T4 Concentration', value: 78, color: 'bg-xai-accent' },
-        { label: 'Age Factor', value: 12, color: 'bg-xai-muted' }
+        { label: t('diagnose.tsh_label'), value: 95, color: 'bg-xai-accent' },
+        { label: t('diagnose.tt4_label'), value: 78, color: 'bg-xai-accent' },
+        { label: t('diagnose.age_label'), value: 12, color: 'bg-xai-muted' }
       ]
     },
     {
-      name: 'Patient C: Emma, 28',
+      name: t('demo.preset_hyper'),
       data: [
-        { name: 'TSH', val: '0.1 mIU/L' },
-        { name: 'T3', val: '3.5 ng/dL' },
-        { name: 'T4', val: '15.4 μg/dL' },
-        { name: 'Age', val: '28' },
-        { name: 'Gender', val: 'Female' }
+        { name: t('diagnose.tsh'), val: '0.1 mIU/L' },
+        { name: t('diagnose.t3'), val: '3.5 ng/dL' },
+        { name: t('diagnose.tt4'), val: '15.4 μg/dL' },
+        { name: t('diagnose.age'), val: '28' },
+        { name: t('diagnose.sex'), val: t('diagnose.female') }
       ],
-      prediction: 'HYPERTHYROID',
+      prediction: t('predictions.Hyperthyroid'),
       confidence: '91.8%',
       statusColor: 'text-xai-danger',
       bulletColor: 'bg-xai-danger',
       importance: [
-        { label: 'TSH Level', value: 92, color: 'bg-xai-accent' },
-        { label: 'T3 Concentration', value: 88, color: 'bg-xai-accent' },
-        { label: 'T4 Concentration', value: 74, color: 'bg-xai-accent' }
+        { label: t('diagnose.tsh_label'), value: 92, color: 'bg-xai-accent' },
+        { label: t('diagnose.t3_label'), value: 88, color: 'bg-xai-accent' },
+        { label: t('diagnose.tt4_label'), value: 74, color: 'bg-xai-accent' }
       ]
     }
   ];
@@ -286,23 +289,23 @@ export default function Home() {
 
         <div className="relative z-10 text-center max-w-5xl mx-auto px-6">
           <p className="font-poppins text-xai-accent text-sm md:text-base tracking-[0.3em] uppercase mb-6 opacity-0 hero-eyebrow">
-            Explainable AI for Thyroid Health
+            {t('hero.eyebrow')}
           </p>
 
           <h1 className="font-orbitron text-5xl md:text-7xl lg:text-8xl font-bold text-white mb-8 leading-tight">
             <span className="inline-block overflow-hidden">
-              <span className="hero-word inline-block">Predict.</span>
+              <span className="hero-word inline-block">{t('hero.headline1')}</span>
             </span>{' '}
             <span className="inline-block overflow-hidden">
-              <span className="hero-word inline-block text-xai-accent">Explain.</span>
+              <span className="hero-word inline-block text-xai-accent">{t('hero.headline2')}</span>
             </span>{' '}
             <span className="inline-block overflow-hidden">
-              <span className="hero-word inline-block">Trust.</span>
+              <span className="hero-word inline-block">{t('hero.headline3')}</span>
             </span>
           </h1>
 
           <p className="hero-sub font-poppins text-lg md:text-xl text-xai-muted max-w-2xl mx-auto mb-12 leading-relaxed opacity-0">
-            XAI Thyroid combines deep learning with explainable AI to detect thyroid conditions with transparency you can verify.
+            {t('hero.subtitle')}
           </p>
 
           <div className="hero-buttons flex flex-col sm:flex-row gap-4 justify-center items-center opacity-0">
@@ -310,12 +313,12 @@ export default function Home() {
               to="/diagnose" 
               className="relative overflow-hidden bg-xai-accent text-white font-poppins font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] active:scale-95 text-center w-full sm:w-auto"
             >
-              Start Diagnosis
+              {t('hero.cta1')}
             </Link>
             <button 
               className="relative overflow-hidden bg-transparent border border-xai-border text-white font-poppins font-medium px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:border-xai-accent hover:text-xai-accent hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] active:scale-95 flex items-center justify-center gap-2 w-full sm:w-auto"
             >
-              <Play size={18} /> Watch Demo
+              <Play size={18} /> {t('hero.cta2')}
             </button>
           </div>
         </div>
@@ -329,10 +332,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white mb-4">
-              The Silent <span className="text-xai-accent">Epidemic</span>
+              {t('epidemic.title')} <span className="text-xai-accent">{t('epidemic.titleAccent')}</span>
             </h2>
             <p className="font-poppins text-xai-muted text-lg max-w-2xl mx-auto">
-              Thyroid disorders affect nearly a billion people worldwide, yet millions remain undiagnosed.
+              {t('epidemic.subtitle')}
             </p>
           </div>
 
@@ -340,22 +343,22 @@ export default function Home() {
             {/* Card 1 */}
             <div className="stat-card bg-xai-glass backdrop-blur-[12px] border border-xai-border rounded-2xl p-8 relative overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <Globe className="absolute top-6 right-6 text-xai-accent/30" size={36} />
-              <div className="font-orbitron text-5xl md:text-6xl font-bold text-xai-accent mb-4">750M+</div>
-              <div className="font-poppins text-xai-muted text-lg font-medium">People Affected Globally</div>
+              <div className="font-orbitron text-5xl md:text-6xl font-bold text-xai-accent mb-4">{t('epidemic.stat1Number')}</div>
+              <div className="font-poppins text-xai-muted text-lg font-medium">{t('epidemic.stat1Label')}</div>
             </div>
 
             {/* Card 2 */}
             <div className="stat-card bg-xai-glass backdrop-blur-[12px] border border-xai-border rounded-2xl p-8 relative overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <AlertTriangle className="absolute top-6 right-6 text-xai-warning/30" size={36} />
-              <div className="font-orbitron text-5xl md:text-6xl font-bold text-xai-warning mb-4">60%</div>
-              <div className="font-poppins text-xai-muted text-lg font-medium">Remain Undiagnosed</div>
+              <div className="font-orbitron text-5xl md:text-6xl font-bold text-xai-warning mb-4">{t('epidemic.stat2Number')}</div>
+              <div className="font-poppins text-xai-muted text-lg font-medium">{t('epidemic.stat2Label')}</div>
             </div>
 
             {/* Card 3 */}
             <div className="stat-card bg-xai-glass backdrop-blur-[12px] border border-xai-border rounded-2xl p-8 relative overflow-hidden transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <Users className="absolute top-6 right-6 text-xai-danger/30" size={36} />
-              <div className="font-orbitron text-5xl md:text-6xl font-bold text-xai-danger mb-4">1 in 8</div>
-              <div className="font-poppins text-xai-muted text-lg font-medium">Women Will Develop a Thyroid Disorder</div>
+              <div className="font-orbitron text-5xl md:text-6xl font-bold text-xai-danger mb-4">{t('epidemic.stat3Number')}</div>
+              <div className="font-poppins text-xai-muted text-lg font-medium">{t('epidemic.stat3Label')}</div>
             </div>
           </div>
         </div>
@@ -369,10 +372,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white mb-4">
-              How <span className="text-xai-accent">XAI Thyroid</span> Works
+              {t('howItWorks.title')}
             </h2>
             <p className="font-poppins text-xai-muted text-lg max-w-2xl mx-auto">
-              A transparent 5-step pipeline from data to diagnosis.
+              {t('howItWorks.subtitle')}
             </p>
           </div>
 
@@ -386,8 +389,7 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mx-auto mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                   <Database size={28} />
                 </div>
-                <h3 className="font-orbitron text-xl font-bold text-white mb-3">Input</h3>
-                <p className="font-poppins text-xai-muted text-sm leading-relaxed">Patient data & symptoms entered</p>
+                <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('howItWorks.step1')}</h3>
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-xai-bg border border-xai-accent text-xai-accent font-orbitron text-xs flex items-center justify-center font-bold">
                   1
                 </div>
@@ -398,8 +400,7 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mx-auto mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                   <Filter size={28} />
                 </div>
-                <h3 className="font-orbitron text-xl font-bold text-white mb-3">Preprocess</h3>
-                <p className="font-poppins text-xai-muted text-sm leading-relaxed">Data cleaned & normalized</p>
+                <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('howItWorks.step2')}</h3>
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-xai-bg border border-xai-accent text-xai-accent font-orbitron text-xs flex items-center justify-center font-bold">
                   2
                 </div>
@@ -410,8 +411,7 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mx-auto mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                   <Brain size={28} />
                 </div>
-                <h3 className="font-orbitron text-xl font-bold text-white mb-3">Predict</h3>
-                <p className="font-poppins text-xai-muted text-sm leading-relaxed">Neural network analyzes patterns</p>
+                <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('howItWorks.step3')}</h3>
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-xai-bg border border-xai-accent text-xai-accent font-orbitron text-xs flex items-center justify-center font-bold">
                   3
                 </div>
@@ -422,8 +422,7 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mx-auto mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                   <Search size={28} />
                 </div>
-                <h3 className="font-orbitron text-xl font-bold text-white mb-3">Explain</h3>
-                <p className="font-poppins text-xai-muted text-sm leading-relaxed">LIME/SHAP reveals why</p>
+                <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('howItWorks.step4')}</h3>
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-xai-bg border border-xai-accent text-xai-accent font-orbitron text-xs flex items-center justify-center font-bold">
                   4
                 </div>
@@ -434,8 +433,7 @@ export default function Home() {
                 <div className="w-16 h-16 rounded-full bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mx-auto mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                   <FileText size={28} />
                 </div>
-                <h3 className="font-orbitron text-xl font-bold text-white mb-3">Report</h3>
-                <p className="font-poppins text-xai-muted text-sm leading-relaxed">Clinical-grade PDF output</p>
+                <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('howItWorks.step5')}</h3>
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-xai-bg border border-xai-accent text-xai-accent font-orbitron text-xs flex items-center justify-center font-bold">
                   5
                 </div>
@@ -453,10 +451,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white mb-4">
-              Three <span className="text-xai-accent">Conditions</span>
+              {t('conditions.title')} <span className="text-xai-accent">{t('conditions.titleAccent')}</span>
             </h2>
             <p className="font-poppins text-xai-muted text-lg max-w-2xl mx-auto">
-              Our model classifies thyroid function into three distinct categories.
+              {t('conditions.subtitle')}
             </p>
           </div>
 
@@ -465,15 +463,15 @@ export default function Home() {
             <div className="condition-card bg-xai-glass backdrop-blur-[12px] border border-xai-border rounded-2xl border-t-4 border-t-xai-warning p-8 flex flex-col justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-orbitron text-2xl font-bold text-white">Hypothyroidism</h3>
+                  <h3 className="font-orbitron text-2xl font-bold text-white">{t('conditions.hypo')}</h3>
                   <TrendingDown className="text-xai-warning" size={28} />
                 </div>
                 <p className="font-poppins text-xai-muted text-sm leading-relaxed mb-6">
-                  Underactive thyroid producing insufficient hormones. Associated with fatigue, weight gain, and cold sensitivity.
+                  {t('conditions.hypoDesc')}
                 </p>
               </div>
               <span className="bg-xai-warning/10 text-xai-warning border border-xai-warning/20 px-3 py-1 rounded-full text-xs font-poppins font-medium inline-block w-fit">
-                Hypothyroid
+                {t('conditions.hypo')}
               </span>
             </div>
 
@@ -481,15 +479,15 @@ export default function Home() {
             <div className="condition-card bg-xai-glass backdrop-blur-[12px] border border-xai-border rounded-2xl border-t-4 border-t-xai-success p-8 flex flex-col justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-orbitron text-2xl font-bold text-white">Normal / Euthyroid</h3>
+                  <h3 className="font-orbitron text-2xl font-bold text-white">{t('conditions.normal')}</h3>
                   <Activity className="text-xai-success" size={28} />
                 </div>
                 <p className="font-poppins text-xai-muted text-sm leading-relaxed mb-6">
-                  Thyroid functioning within healthy parameters. Hormone levels are balanced and optimal.
+                  {t('conditions.normalDesc')}
                 </p>
               </div>
               <span className="bg-xai-success/10 text-xai-success border border-xai-success/20 px-3 py-1 rounded-full text-xs font-poppins font-medium inline-block w-fit">
-                Euthyroid
+                {t('conditions.normal')}
               </span>
             </div>
 
@@ -497,15 +495,15 @@ export default function Home() {
             <div className="condition-card bg-xai-glass backdrop-blur-[12px] border border-xai-border rounded-2xl border-t-4 border-t-xai-danger p-8 flex flex-col justify-between transition-all duration-500 hover:-translate-y-1 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]">
               <div>
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="font-orbitron text-2xl font-bold text-white">Hyperthyroidism</h3>
+                  <h3 className="font-orbitron text-2xl font-bold text-white">{t('conditions.hyper')}</h3>
                   <TrendingUp className="text-xai-danger" size={28} />
                 </div>
                 <p className="font-poppins text-xai-muted text-sm leading-relaxed mb-6">
-                  Overactive thyroid producing excessive hormones. Associated with anxiety, weight loss, and heat intolerance.
+                  {t('conditions.hyperDesc')}
                 </p>
               </div>
               <span className="bg-xai-danger/10 text-xai-danger border border-xai-danger/20 px-3 py-1 rounded-full text-xs font-poppins font-medium inline-block w-fit">
-                Hyperthyroid
+                {t('conditions.hyper')}
               </span>
             </div>
           </div>
@@ -520,10 +518,10 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white mb-4">
-              Live <span className="text-xai-accent">Demo</span> Preview
+              {t('demo.heading')}
             </h2>
             <p className="font-poppins text-xai-muted text-center text-lg max-w-2xl mx-auto">
-              Select a preset patient profile to see XAI Thyroid in action.
+              {t('demo.subheading')}
             </p>
           </div>
 
@@ -549,7 +547,7 @@ export default function Home() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Input panel */}
               <div className="lg:col-span-1 bg-xai-card rounded-xl p-6 border border-xai-border">
-                <h4 className="font-orbitron text-white font-bold mb-4">Patient Data</h4>
+                <h4 className="font-orbitron text-white font-bold mb-4">{t('diagnose.demo_patients')}</h4>
                 <div className="space-y-3">
                   {presets[activePreset].data.map((item, i) => (
                     <div key={i} className="flex justify-between font-poppins text-sm border-b border-white/5 pb-2">
@@ -563,7 +561,7 @@ export default function Home() {
               {/* Prediction panel */}
               <div className="lg:col-span-2 bg-xai-card rounded-xl p-6 border border-xai-border relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-xai-accent/5 rounded-full blur-3xl pointer-events-none" />
-                <h4 className="font-orbitron text-white font-bold mb-6">AI Prediction</h4>
+                <h4 className="font-orbitron text-white font-bold mb-6">{t('diagnose.result')}</h4>
                 
                 <div className="flex items-center gap-4 mb-6">
                   <div className={`w-3 h-3 rounded-full ${presets[activePreset].bulletColor} animate-pulse`} />
@@ -571,7 +569,7 @@ export default function Home() {
                     {presets[activePreset].prediction}
                   </span>
                   <span className="font-poppins text-xai-muted text-sm">
-                    Confidence: <span className="text-white font-semibold">{presets[activePreset].confidence}</span>
+                    {t('diagnose.confidence')}: <span className="text-white font-semibold">{presets[activePreset].confidence}</span>
                   </span>
                 </div>
 
@@ -603,11 +601,8 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-20">
             <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white mb-4">
-              Why Trust This <span className="text-xai-accent">Tool</span>
+              {t('trust.heading')}
             </h2>
-            <p className="font-poppins text-xai-muted text-lg max-w-2xl mx-auto">
-              Built for clinicians, researchers, and patients who demand transparency.
-            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
@@ -616,9 +611,9 @@ export default function Home() {
               <div className="w-14 h-14 rounded-xl bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                 <Eye size={26} />
               </div>
-              <h3 className="font-orbitron text-xl font-bold text-white mb-3">Explainable AI</h3>
+              <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('trust.feat1_title')}</h3>
               <p className="font-poppins text-xai-muted text-sm leading-relaxed">
-                Every prediction is backed by LIME and SHAP visualizations. No black boxes.
+                {t('trust.feat1_desc')}
               </p>
             </div>
 
@@ -627,9 +622,9 @@ export default function Home() {
               <div className="w-14 h-14 rounded-xl bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                 <ShieldCheck size={26} />
               </div>
-              <h3 className="font-orbitron text-xl font-bold text-white mb-3">Clinical Grade</h3>
+              <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('trust.feat2_title')}</h3>
               <p className="font-poppins text-xai-muted text-sm leading-relaxed">
-                Trained on validated datasets with 96.4% accuracy on held-out test sets.
+                {t('trust.feat2_desc')}
               </p>
             </div>
 
@@ -638,9 +633,9 @@ export default function Home() {
               <div className="w-14 h-14 rounded-xl bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                 <Lock size={26} />
               </div>
-              <h3 className="font-orbitron text-xl font-bold text-white mb-3">Privacy First</h3>
+              <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('trust.feat3_title')}</h3>
               <p className="font-poppins text-xai-muted text-sm leading-relaxed">
-                All processing happens locally. Patient data never leaves your device.
+                {t('trust.feat3_desc')}
               </p>
             </div>
 
@@ -649,9 +644,9 @@ export default function Home() {
               <div className="w-14 h-14 rounded-xl bg-xai-accent/10 border border-xai-accent/20 flex items-center justify-center mb-6 text-xai-accent group-hover:bg-xai-accent group-hover:text-white transition-all duration-500">
                 <GitBranch size={26} />
               </div>
-              <h3 className="font-orbitron text-xl font-bold text-white mb-3">Open Science</h3>
+              <h3 className="font-orbitron text-xl font-bold text-white mb-3">{t('trust.feat4_title')}</h3>
               <p className="font-poppins text-xai-muted text-sm leading-relaxed">
-                Peer-reviewed methodology. Reproducible results. Full audit trail.
+                {t('trust.feat4_desc')}
               </p>
             </div>
           </div>
@@ -669,11 +664,11 @@ export default function Home() {
 
         <div className="max-w-4xl mx-auto text-center relative z-10 cta-section-anim">
           <h2 className="font-orbitron text-4xl md:text-6xl lg:text-7xl font-bold text-white mb-6 leading-tight">
-            Ready to See the <span className="text-xai-accent">Future</span> of Thyroid Care?
+            {t('cta_section.heading')}
           </h2>
           
           <p className="font-poppins text-xai-muted text-lg md:text-xl max-w-2xl mx-auto mb-12 leading-relaxed">
-            Join thousands of clinicians and researchers using XAI Thyroid to make informed, transparent diagnostic decisions.
+            {t('cta_section.subheading')}
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -681,13 +676,13 @@ export default function Home() {
               to="/diagnose" 
               className="relative overflow-hidden bg-xai-accent text-white font-poppins font-semibold px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] active:scale-95 text-lg text-center w-full sm:w-auto"
             >
-              Diagnose now
+              {t('hero.cta_diagnose')}
             </Link>
             <Link 
               to="/about" 
               className="relative overflow-hidden bg-transparent border border-xai-border text-white font-poppins font-medium px-8 py-4 rounded-full transition-all duration-300 hover:scale-105 hover:border-xai-accent hover:text-xai-accent hover:shadow-[0_0_20px_rgba(59,130,246,0.2)] text-lg text-center w-full sm:w-auto"
             >
-              Read Documentation
+              {t('nav.about')}
             </Link>
           </div>
         </div>

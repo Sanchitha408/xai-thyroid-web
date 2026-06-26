@@ -7,10 +7,12 @@ import ShapChart from './ShapChart';
 import RadarChart from './RadarChart';
 import ReportDownload from './ReportDownload';
 import { initResultAnimation } from '../animations/gsapAnimations';
+import useAuth from '../hooks/useAuth';
 
 export default function ResultPanel({ result = null, patientData = null, recordId = null }) {
   const { t } = useTranslation();
   const panelRef = useRef(null);
+  const { user } = useAuth();
 
   useEffect(() => {
     if (result) {
@@ -43,7 +45,7 @@ export default function ResultPanel({ result = null, patientData = null, recordI
         icon: <CheckCircle2 className="text-success" size={28} />,
         badgeClass: 'badge-normal',
         title: t('result.normal'),
-        desc: 'All thyroid metabolic indicators within normal parameters.'
+        desc: t('result.normal_desc')
       };
     }
     if (isHypo) {
@@ -51,14 +53,14 @@ export default function ResultPanel({ result = null, patientData = null, recordI
         icon: <AlertTriangle className="text-danger" size={28} />,
         badgeClass: 'badge-hypo',
         title: t('result.hypothyroid'),
-        desc: 'Elevated TSH and low active hormones indicate hypothyroid condition.'
+        desc: t('result.hypo_desc')
       };
     }
     return {
       icon: <AlertOctagon className="text-warning" size={28} />,
       badgeClass: 'badge-hyper',
       title: t('result.hyperthyroid'),
-      desc: 'Suppressed TSH and elevated free hormones indicate hyperactive thyroid.'
+      desc: t('result.hyper_desc')
     };
   };
 
@@ -82,7 +84,7 @@ export default function ResultPanel({ result = null, patientData = null, recordI
                 {t('result.prediction')}
               </h3>
               <span className={`px-2.5 py-0.5 rounded-full text-xs font-orbitron font-bold uppercase tracking-wider ${details.badgeClass}`}>
-                {result.prediction}
+                {t(`predictions.${result.prediction}`) || result.prediction}
               </span>
             </div>
             <p className="font-poppins text-sm text-muted mt-2 max-w-md">
@@ -112,14 +114,14 @@ export default function ResultPanel({ result = null, patientData = null, recordI
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center border-b border-border pb-8">
         <div className="flex flex-col items-center justify-center bg-bg-glass/40 border border-border rounded-2xl p-6 min-h-[200px]">
           <span className="font-orbitron text-[10px] text-muted tracking-widest uppercase mb-4 self-start">
-            TSH GAUGE
+            {t('result.tsh_gauge')}
           </span>
           <HealthGauge value={patientData?.tsh} />
         </div>
 
         <div className="flex flex-col items-center justify-center bg-bg-glass/40 border border-border rounded-2xl p-6 min-h-[200px]">
           <span className="font-orbitron text-[10px] text-muted tracking-widest uppercase mb-4 self-start">
-            BLOOD TEST PROFILE RADAR
+            {t('result.blood_profile_radar')}
           </span>
           <RadarChart patientData={patientData} />
         </div>
@@ -130,7 +132,9 @@ export default function ResultPanel({ result = null, patientData = null, recordI
         <h4 className="font-orbitron font-semibold text-sm tracking-wider uppercase mb-4 text-muted">
           {t('result.shap_heading')}
         </h4>
-        <ShapChart shapValues={result.shap} />
+        <div id="shap-chart-pdf-container">
+          <ShapChart shapValues={result.shap} />
+        </div>
       </div>
 
       {/* Clinical Narrative Narrative explanation */}
@@ -151,10 +155,9 @@ export default function ResultPanel({ result = null, patientData = null, recordI
           {t('result.disclaimer')}
         </p>
         <ReportDownload
-          recordId={recordId}
-          patientData={patientData}
-          predictionResult={result}
-          elementIdToCapture="diagnosis-report-container"
+          result={result}
+          inputs={patientData}
+          user={user}
         />
       </div>
     </div>

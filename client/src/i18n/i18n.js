@@ -9,7 +9,7 @@ import ta from './locales/ta.json';
 import fr from './locales/fr.json';
 import es from './locales/es.json';
 
-const savedLang = localStorage.getItem('xai_lang') || 'en';
+const savedLang = localStorage.getItem('lang') || 'en';
 
 i18n.use(initReactI18next).init({
   resources: {

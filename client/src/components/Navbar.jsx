@@ -8,11 +8,11 @@ import LanguageSwitcher from './LanguageSwitcher';
 import Logo from "../assets/logo.png";
 
 const links = [
-  { name: 'Home', href: '/' },
-  { name: 'Diagnose', href: '/diagnose' },
-  { name: 'Compare', href: '/compare' },
-  { name: 'Dashboard', href: '/dashboard' },
-  { name: 'About', href: '/about' },
+  { name: 'Home', key: 'nav.home', href: '/' },
+  { name: 'Diagnose', key: 'nav.diagnose', href: '/diagnose' },
+  { name: 'Compare', key: 'nav.compare', href: '/compare' },
+  { name: 'Dashboard', key: 'nav.dashboard', href: '/dashboard' },
+  { name: 'About', key: 'nav.about', href: '/about' },
 ];
 
 export default function Navbar() {
@@ -118,7 +118,7 @@ export default function Navbar() {
                   : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
                   }`}
               >
-                {link.name}
+                {t(link.key)}
                 {isActive(link.href) && (
                   <span className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#3B82F6]" />
                 )}
@@ -137,12 +137,12 @@ export default function Navbar() {
               <>
                 <Link to="/auth">
                   <button className="hidden sm:flex items-center px-4 py-2 rounded-full font-poppins font-medium text-sm text-[#94A3B8] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(59,130,246,0.5)] hover:bg-[rgba(59,130,246,0.08)] transition-all duration-300">
-                    Login
+                    {t('nav.login')}
                   </button>
                 </Link>
                 <Link to="/auth?mode=register">
                   <button className="flex items-center px-4 py-2 rounded-full font-poppins font-semibold text-sm text-white bg-[#3B82F6] hover:bg-[#2563EB] hover:scale-105 hover:shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-all duration-300 active:scale-95">
-                    Get Started
+                    {t('nav.getStarted')}
                   </button>
                 </Link>
               </>
@@ -172,9 +172,9 @@ export default function Navbar() {
 
                     {/* Menu items */}
                     {[
-                      { label: '📊 Dashboard', href: '/dashboard' },
-                      { label: '📋 Compare', href: '/compare' },
-                      { label: '🩺 Diagnose', href: '/diagnose' },
+                      { label: `📊 ${t('nav.dashboard')}`, href: '/dashboard' },
+                      { label: `📋 ${t('nav.compare')}`, href: '/compare' },
+                      { label: `🩺 ${t('nav.diagnose')}`, href: '/diagnose' },
                     ].map((item) => (
                       <Link
                         key={item.href}
@@ -192,7 +192,7 @@ export default function Navbar() {
                       onClick={handleLogout}
                       className="flex items-center w-full px-4 py-2.5 rounded-xl font-poppins text-sm text-[#EF4444] hover:bg-[rgba(239,68,68,0.1)] transition-all duration-200"
                     >
-                      🚪 Logout
+                      🚪 {t('nav.logout')}
                     </button>
                   </div>
                 )}
@@ -234,7 +234,7 @@ export default function Navbar() {
                   : 'text-[#94A3B8] hover:text-white hover:bg-[rgba(255,255,255,0.06)]'
                   }`}
               >
-                {link.name}
+                {t(link.key)}
               </Link>
             ))}
           </div>
@@ -249,14 +249,14 @@ export default function Navbar() {
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-xl font-poppins font-medium text-sm text-[#94A3B8] border border-[rgba(255,255,255,0.08)] hover:text-white hover:border-[rgba(59,130,246,0.5)] hover:bg-[rgba(59,130,246,0.08)] transition-all duration-300 text-center"
               >
-                Login
+                {t('nav.login')}
               </Link>
               <Link
                 to="/auth?mode=register"
                 onClick={() => setMobileOpen(false)}
                 className="px-4 py-3 rounded-xl font-poppins font-semibold text-sm text-white bg-[#3B82F6] hover:bg-[#2563EB] transition-all duration-300 text-center"
               >
-                Get Started
+                {t('nav.getStarted')}
               </Link>
             </div>
           ) : (
@@ -268,7 +268,7 @@ export default function Navbar() {
                 onClick={handleLogout}
                 className="px-4 py-3 rounded-xl font-poppins text-sm text-[#EF4444] border border-[rgba(239,68,68,0.2)] hover:bg-[rgba(239,68,68,0.1)] transition-all duration-200 text-center"
               >
-                🚪 Logout
+                🚪 {t('nav.logout')}
               </button>
             </div>
           )}

@@ -104,7 +104,7 @@ export default function ChatBot() {
     } catch (err) {
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: 'Connection error. Please try again.' 
+        content: t('chatbot.error')
       }]);
     } finally {
       setIsLoading(false);
@@ -173,7 +173,7 @@ export default function ChatBot() {
             }}
             className="group-hover:!opacity-100"
           >
-            Ask Thyroid Assistant
+            {t('chatbot.title')}
           </span>
         </div>
       )}
@@ -196,7 +196,7 @@ export default function ChatBot() {
               <button
                 onClick={() => setVoiceEnabled(!voiceEnabled)}
                 className="w-8 h-8 rounded-full bg-bg-glass border border-border flex items-center justify-center text-muted hover:text-primary hover:border-primary transition-all duration-200"
-                title={voiceEnabled ? "Mute Voice" : "Enable Voice"}
+                title={voiceEnabled ? t('chatbot.mute') : t('chatbot.unmute')}
               >
                 {voiceEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
               </button>
@@ -266,7 +266,7 @@ export default function ChatBot() {
                       }}
                       className="mt-1 ml-[44px] self-start flex items-center gap-1.5 px-3 py-1 rounded-full bg-bg-glass border border-border text-xs text-muted hover:text-primary hover:border-primary transition-all duration-200 shadow-sm"
                     >
-                      <span>⏹</span> Stop
+                      <span>⏹</span> {t('chatbot.stop')}
                     </button>
                   )}
                 </div>

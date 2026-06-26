@@ -22,7 +22,7 @@ export default function LanguageSwitcher() {
   const handleLanguageChange = async (code) => {
     try {
       await i18n.changeLanguage(code);
-      localStorage.setItem('xai_lang', code);
+      localStorage.setItem('lang', code);
       
       if (user) {
         // Update user preference in database

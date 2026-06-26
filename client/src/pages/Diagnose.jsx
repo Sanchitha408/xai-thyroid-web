@@ -78,13 +78,13 @@ export default function Diagnose() {
         <div className="flex flex-col gap-2 max-w-2xl">
           <span className="eyebrow flex items-center gap-2">
             <Sparkles size={14} className="text-primary animate-pulse" />
-            <span>CLINICAL DECISION INTERFACE</span>
+            <span>{t('diagnose.eyebrow')}</span>
           </span>
           <h1 className="font-orbitron font-extrabold text-3xl md:text-4xl text-white tracking-wide">
-            {t('nav.diagnose')}
+            {t('diagnose.title')}
           </h1>
           <p className="text-sm text-muted leading-relaxed">
-            Enter biometric parameters to execute the neural network predictions and display local SHAP explainability variables.
+            {t('diagnose.subtitle')}
           </p>
         </div>
 
