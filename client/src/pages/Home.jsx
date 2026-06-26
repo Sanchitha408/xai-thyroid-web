@@ -593,6 +593,57 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ─── SECTION 5.5: ULTRASOUND IMAGE XAI FEATURE ───────── */}
+      <section
+        className="ultrasound-feature bg-xai-bgAlt py-24 px-6 md:px-12 lg:px-20 xl:px-32 border-b border-xai-border relative overflow-hidden"
+      >
+        <div className="absolute top-1/3 left-1/3 w-[300px] h-[300px] bg-[#3B82F6]/5 rounded-full blur-[120px] pointer-events-none" />
+        <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-12">
+          <div className="flex-1 flex flex-col gap-6">
+            <span className="eyebrow flex items-center gap-2 text-xai-accent uppercase tracking-widest text-xs font-bold font-orbitron">
+              <span className="w-2 h-2 rounded-full bg-xai-accent animate-ping" />
+              New Feature
+            </span>
+            <h2 className="font-orbitron text-3xl md:text-5xl font-bold text-white leading-tight">
+              Thyroid Ultrasound <br/>
+              <span className="text-xai-accent">Image XAI Analysis</span>
+            </h2>
+            <p className="font-poppins text-xai-muted text-base md:text-lg leading-relaxed">
+              Experience the future of diagnostic transparency. Upload thyroid ultrasound scans (JPG/PNG) to instantly highlight candidate nodule regions. Our Explainable AI engine superimposes four distinct attention overlays: <strong>Grad-CAM</strong>, <strong>Grad-CAM++</strong>, <strong>LIME</strong>, and <strong>RISE</strong>.
+            </p>
+            <div className="flex flex-wrap gap-4 mt-2">
+              <Link 
+                to="/ultrasound" 
+                className="relative overflow-hidden bg-xai-accent text-white font-poppins font-semibold px-8 py-3.5 rounded-full transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(59,130,246,0.4)] active:scale-95 text-center"
+              >
+                Analyze Ultrasound Scan
+              </Link>
+            </div>
+          </div>
+          <div className="flex-1 w-full max-w-lg lg:max-w-none">
+            <div className="glass-card p-4 bg-xai-glass border border-xai-border rounded-2xl relative overflow-hidden group hover:border-xai-accent/30 transition-all duration-500 hover:shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+              <div className="aspect-[4/3] rounded-xl overflow-hidden bg-black/40 border border-white/5 relative flex items-center justify-center">
+                <div className="absolute inset-0 bg-gradient-to-tr from-black via-zinc-900 to-black flex items-center justify-center text-zinc-700 select-none">
+                  <div className="w-4/5 h-4/5 rounded-full border-4 border-dashed border-zinc-800/60 animate-[spin_40s_linear_infinite] absolute" />
+                  <div className="w-2/3 h-2/3 rounded-full border border-dashed border-zinc-800/40 animate-[spin_20s_linear_infinite_reverse] absolute" />
+                  <span className="font-orbitron font-semibold text-xs tracking-wider opacity-30 uppercase">Thyroid Ultrasound Scan Simulation</span>
+                </div>
+                
+                <div className="absolute w-28 h-28 rounded-full border-2 border-dashed border-red-500/60 bg-red-500/10 blur-[2px] flex items-center justify-center animate-pulse">
+                  <span className="font-orbitron font-bold text-[9px] text-red-400 tracking-widest uppercase">Nodule 87.2%</span>
+                </div>
+                
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_rgba(239,68,68,0.25)_0%,_rgba(245,158,11,0.15)_30%,_rgba(59,130,246,0.05)_60%,_transparent_80%)] pointer-events-none mix-blend-screen" />
+              </div>
+              <div className="mt-4 flex justify-between items-center text-xs font-mono text-xai-muted">
+                <span>MODEL: Ultrasound ResNetXAI</span>
+                <span>METHOD: Grad-CAM++</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ─── SECTION 6: WHY TRUST THIS TOOL ─────────────────── */}
       <section
         ref={trustRef}

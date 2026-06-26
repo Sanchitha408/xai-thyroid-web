@@ -64,4 +64,19 @@ const chatLimiter = rateLimit({
   },
 });
 
-module.exports = { globalLimiter, authLimiter, predictLimiter, chatLimiter };
+/** Image upload route — per user, 10 uploads per hour */
+const imageLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req) => req.user?.id || req.ip,
+  message: { message: 'Image analysis limit reached. You can run 10 analyses per hour.' },
+  handler: (req, res, next, options) => {
+    onLimitReached(req, res, options);
+    res.status(429).json(options.message);
+  },
+});
+
+module.exports = { globalLimiter, authLimiter, predictLimiter, chatLimiter, imageLimiter };
+

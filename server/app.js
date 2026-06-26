@@ -18,8 +18,10 @@ const authRoutes = require('./routes/authRoutes');
 const diagnosisRoutes = require('./routes/diagnosisRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const reportRoutes = require('./routes/reportRoutes');
+const imageRoutes = require('./routes/imageRoutes');
 
 const app = express();
+
 
 // ─── OWASP Security Headers (A05:2021) ─────────────────────────────────────────
 app.use(
@@ -110,6 +112,8 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/diagnosis', diagnosisRoutes);
 app.use('/api/v1/chat', chatRoutes);
 app.use('/api/v1/report', reportRoutes);
+app.use('/api/v1/image', imageRoutes);
+
 
 // ─── 404 Handler ────────────────────────────────────────────────────────────────
 app.use((req, res) => {

@@ -8,11 +8,9 @@ import LanguageSwitcher from './LanguageSwitcher';
 import Logo from "../assets/logo.png";
 
 const links = [
-  { name: 'Home', key: 'nav.home', href: '/' },
-  { name: 'Diagnose', key: 'nav.diagnose', href: '/diagnose' },
-  { name: 'Compare', key: 'nav.compare', href: '/compare' },
-  { name: 'Dashboard', key: 'nav.dashboard', href: '/dashboard' },
-  { name: 'About', key: 'nav.about', href: '/about' },
+  { name: 'Home', href: '/', key: 'nav.home' },
+  { name: 'Diagnose', href: '/diagnose', key: 'nav.diagnose' },
+  { name: 'About', href: '/about', key: 'nav.about' },
 ];
 
 export default function Navbar() {
@@ -80,7 +78,7 @@ export default function Navbar() {
 
   // Filter protected links
   const visibleLinks = links.filter(
-    (l) => (l.href !== '/compare' && l.href !== '/dashboard') || user
+    (l) => (l.href !== '/compare' && l.href !== '/dashboard' && l.href !== '/ultrasound') || user
   );
 
   return (
@@ -175,6 +173,7 @@ export default function Navbar() {
                       { label: `📊 ${t('nav.dashboard')}`, href: '/dashboard' },
                       { label: `📋 ${t('nav.compare')}`, href: '/compare' },
                       { label: `🩺 ${t('nav.diagnose')}`, href: '/diagnose' },
+                      { label: `🔬 ${t('nav.ultrasound') || 'Ultrasound'}`, href: '/ultrasound' },
                     ].map((item) => (
                       <Link
                         key={item.href}

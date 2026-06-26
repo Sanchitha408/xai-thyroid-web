@@ -6,3 +6,5 @@ numpy==2.2.6
 python-multipart==0.0.32
 shap==0.51.0
 joblib==1.5.1
+opencv-python-headless==4.11.0.86
+Pillow==11.1.0

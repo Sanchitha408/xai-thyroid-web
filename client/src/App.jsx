@@ -5,7 +5,9 @@ import Footer from './components/Footer';
 import ChatBot from './components/ChatBot';
 import Home from './pages/Home';
 import Diagnose from './pages/Diagnose';
+import ImageAnalysis from './pages/ImageAnalysis';
 import Compare from './pages/Compare';
+
 import Dashboard from './pages/Dashboard';
 import Auth from './pages/Auth';
 import About from './pages/About';
@@ -71,6 +73,16 @@ export default function App() {
                   }
                 />
                 <Route
+                  path="/ultrasound"
+                  element={
+                    <ProtectedRoute>
+                      <RouteWrapper>
+                        <ImageAnalysis />
+                      </RouteWrapper>
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/compare"
                   element={
                     <ProtectedRoute>
@@ -80,6 +92,7 @@ export default function App() {
                     </ProtectedRoute>
                   }
                 />
+
                 <Route
                   path="/dashboard"
                   element={

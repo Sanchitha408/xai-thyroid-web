@@ -8,7 +8,8 @@
     "login": "Login",
     "getStarted": "Get Started",
     "logout": "Logout",
-    "register": "Register"
+    "register": "Register",
+    "ultrasound": "Ultrasound"
   },
   "hero": {
     "eyebrow": "Explainable AI for Thyroid Health",

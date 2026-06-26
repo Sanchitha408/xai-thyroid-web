@@ -1,6 +1,6 @@
 """
 main.py — FastAPI ML microservice for XAI Thyroid.
-Exposes POST /predict and GET /health endpoints.
+Exposes POST /predict, POST /analyze, and GET /health endpoints.
 Runs on port 8000.
 """
 
@@ -8,13 +8,14 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, validator
 import logging
 
 from predict import load_model, run_prediction
+from image_analyze import generate_heatmaps
 
 # ─── Logging ───────────────────────────────────────────────────────────────────
 logging.basicConfig(level=logging.INFO)
@@ -64,7 +65,7 @@ app.add_middleware(
 # ─── Schemas ───────────────────────────────────────────────────────────────────
 class PredictRequest(BaseModel):
     tsh: float = Field(..., ge=0.0, le=30.0,  description="TSH level (0–30 mIU/L)")
-    t3:  float = Field(..., ge=0.0, le=15.0,  description="T3 level (0–15 nmol/L)")
+    t3:  float = Field(..., ge=0.0, le=15.0,  description="TSH level (0–15 nmol/L)")
     tt4: float = Field(..., ge=0.0, le=300.0, description="TT4 level (0–300 nmol/L)")
     fti: float = Field(..., ge=0.0, le=400.0, description="Free Thyroxine Index (0–400)")
     age: int   = Field(..., ge=1,   le=120,   description="Patient age (1–120)")
@@ -129,6 +130,38 @@ async def predict(payload: PredictRequest):
     except Exception as e:
         logger.error("Prediction error: %s", str(e), exc_info=True)
         raise HTTPException(status_code=500, detail="Prediction failed. Check server logs.")
+
+
+@app.post("/analyze", tags=["Image Analysis"])
+async def analyze(
+    image: UploadFile = File(...),
+    method: str = Form("GradCAM"),
+    stage: str = Form("second_stage"),
+    threshold: float = Form(0.5)
+):
+    """
+    Run thyroid ultrasound image analysis and generate explainability heatmaps.
+    """
+    logger.info("Image analysis request: method=%s, stage=%s, threshold=%.2f", method, stage, threshold)
+    
+    if not image.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="Uploaded file is not an image.")
+        
+    try:
+        # Read image bytes
+        image_bytes = await image.read()
+        
+        # Run explainability pipeline
+        result = generate_heatmaps(
+            image_bytes=image_bytes,
+            method=method,
+            stage=stage,
+            threshold=threshold
+        )
+        return result
+    except Exception as e:
+        logger.error("Image analysis failed: %s", str(e), exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Image analysis failed: {str(e)}")
 
 
 # ─── Global exception handler ──────────────────────────────────────────────────
